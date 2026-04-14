@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RESIDENT_TYPES } from '../data/residents'
+import { stressBadge } from '../theme'
+import AftermathScreen from './AftermathScreen'
+import { incrementHelperCount, incrementKiezHealth } from '../utils/storage'
 
 // SVG icons inlined (same as ResidentMarker but self-contained)
 const icons = {
@@ -60,13 +63,16 @@ const icons = {
 }
 
 export default function DispatchPopup({ resident, onClose }) {
-  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'done'
+  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath'
+  const [helperCount, setHelperCount] = useState(0)
+  const [kiezHealth, setKiezHealth] = useState(0)
   const type = RESIDENT_TYPES[resident.type]
   const Icon = icons[resident.type]
 
   const handleDo = () => {
-    setPhase('done')
-    setTimeout(onClose, 2200)
+    setHelperCount(incrementHelperCount(resident.type))
+    setKiezHealth(incrementKiezHealth(resident.kiez))
+    setPhase('aftermath')
   }
 
   return (
@@ -112,12 +118,9 @@ export default function DispatchPopup({ resident, onClose }) {
                 </div>
               </div>
               <div style={{
-                background: 'rgba(180,60,40,0.18)',
-                border: '1px solid rgba(180,60,40,0.4)',
+                ...stressBadge,
                 borderRadius: 6, padding: '4px 10px',
-                fontSize: 9, color: '#e07060',
-                fontWeight: 700, letterSpacing: '0.1em',
-                textTransform: 'uppercase', fontFamily: 'Inter',
+                fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
                 alignSelf: 'flex-start',
               }}>
                 {resident.stress}
@@ -161,45 +164,17 @@ export default function DispatchPopup({ resident, onClose }) {
           </motion.div>
         )}
 
-        {/* ── Done confirmation ── */}
-        {phase === 'done' && (
-          <motion.div
-            key="done"
-            style={{ ...s.card, alignItems: 'center', padding: '52px 36px', gap: 18 }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 24 }}
-          >
-            <motion.div
-              style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: `${type.color}1a`,
-                border: `2px solid ${type.color}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: `0 0 30px ${type.color}55`,
-              }}
-              animate={{ scale: [0.8, 1.1, 1], rotate: [0, 8, -4, 0] }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
-            >
-              <div style={{ transform: 'scale(1.8)' }}>{Icon && Icon(type.color)}</div>
-            </motion.div>
-
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: 'rgba(237,228,216,0.92)' }}>
-              Thank you.
-            </div>
-
-            <p style={{ color: 'rgba(212,190,168,0.5)', fontSize: 13, textAlign: 'center', lineHeight: 1.7, fontFamily: 'Inter', fontWeight: 300, maxWidth: 260 }}>
-              The {type.label.toLowerCase()} in {resident.kiez} will notice.
-            </p>
-
-            <motion.div
-              style={{ width: 48, height: 2, background: type.color, borderRadius: 1 }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 1.5, ease: 'easeOut' }}
-            />
-          </motion.div>
+        {/* ── Aftermath screen ── */}
+        {phase === 'aftermath' && (
+          <AftermathScreen
+            key="aftermath"
+            resident={resident}
+            type={type}
+            Icon={Icon}
+            helperCount={helperCount}
+            kiezHealth={kiezHealth}
+            onClose={onClose}
+          />
         )}
 
       </AnimatePresence>

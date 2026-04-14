@@ -1,10 +1,10 @@
 export const RESIDENT_TYPES = {
-  fox:   { emoji: '🦊', color: '#d4682a', label: 'Urban Fox' },    // rust
-  bee:   { emoji: '🐝', color: '#e8a84a', label: 'Solitary Bee' }, // warm amber
-  bird:  { emoji: '🐦', color: '#8ab8b2', label: 'Migratory Bird' }, // mist teal
-  tree:  { emoji: '🌳', color: '#96b87e', label: 'Linden Tree' },  // muted olive
-  boar:  { emoji: '🐗', color: '#b07848', label: 'Wild Boar' },    // muted brown
-  spree: { emoji: '🌊', color: '#7aacb0', label: 'Spree River' },  // deeper teal
+  fox:   { emoji: '🦊', color: '#d4682a', label: 'Urban Fox',       populationStatus: 'Recovering' },
+  bee:   { emoji: '🐝', color: '#e8a84a', label: 'Solitary Bee',    populationStatus: 'At Risk'    },
+  bird:  { emoji: '🐦', color: '#8ab8b2', label: 'Migratory Bird',  populationStatus: 'At Risk'    },
+  tree:  { emoji: '🌳', color: '#96b87e', label: 'Linden Tree',     populationStatus: 'Stable'     },
+  boar:  { emoji: '🐗', color: '#b07848', label: 'Wild Boar',       populationStatus: 'Stable'     },
+  spree: { emoji: '🌊', color: '#7aacb0', label: 'Spree River',     populationStatus: 'At Risk'    },
 }
 
 export const RESIDENTS = [
@@ -15,6 +15,8 @@ export const RESIDENTS = [
     detail: 'Ground-level lighting disrupts hunting between 2–4am.',
     dispatch: "It's 2:47am on Schönhauser Allee and I cannot hunt. Every lamp is still lit. My eyes are made for darkness — for the exact moment a mouse stops moving and thinks it's safe. Tonight there are no such moments. I've gone home hungry three nights running.",
     action: 'Turn off your outdoor or porch light tonight between 10pm and sunrise. One dark patch in a Kiez is a hunting ground returned.',
+    aftermath: "By midnight, Schönhauser Allee had its first dark stretch in weeks. The fox made three successful hunts before dawn — the most productive night since April. A neighbour found only neat paw prints in the frost the next morning.",
+    imagePrompt: 'urban fox hunting on dark cobblestone Berlin street at 3am, one porch light off, misty pavement, cinematic wildlife photography',
   },
   {
     id: 2, type: 'fox', lng: 13.388, lat: 52.497,
@@ -22,6 +24,8 @@ export const RESIDENTS = [
     detail: 'Three foxes now rely entirely on restaurant waste bins.',
     dispatch: "I found pasta in a bag outside a restaurant on Oranienstrasse at midnight. I ate it. I know I shouldn't. But it was there and it was easy. My natural food takes hours to find. This took thirty seconds. I am forgetting how to hunt and I don't know how to stop.",
     action: "Check that your building's bins have a secure, latching lid. If not, ask your Hausverwaltung — or buy a clip for your own bin.",
+    aftermath: "The secured bins on Oranienstrasse broke the easy nightly routine. By the third night the fox had returned to the alleys south of Görlitzer Park, nose to the ground, relearning the old routes. The foraging took longer — but it was real.",
+    imagePrompt: 'urban fox foraging naturally in dark Berlin park alley at night, fallen leaves, misty, cinematic wildlife photography',
   },
   {
     id: 3, type: 'fox', lng: 13.241, lat: 52.467,
@@ -29,6 +33,8 @@ export const RESIDENTS = [
     detail: 'AVUS motorway bisects the territory. Two crossings fatal last month.',
     dispatch: "There is a motorway between my family and the forest where we were born. I know a crossing point where the barrier is lower. Last month I tried seventeen times. Two of my family did not come back. I still don't know another way across.",
     action: 'Sign the Berlin wildlife corridor petition at BUND-Berlin.de — it asks the city for underpasses on the AVUS. Takes 30 seconds.',
+    aftermath: "The petition reached 12,000 signatures within a month. Berlin Senat added two AVUS underpasses to the 2026 infrastructure plan. A wildlife camera at the proposed site later recorded a fox crossing — the first documented in three years.",
+    imagePrompt: 'red fox crossing safely under dark motorway wildlife underpass at night, Grunewald forest on both sides, infrared wildlife camera',
   },
   {
     id: 4, type: 'fox', lng: 13.350, lat: 52.548,
@@ -36,6 +42,8 @@ export const RESIDENTS = [
     detail: 'Construction reduced family range from 4.2km² to 1.8km².',
     dispatch: "My home used to be four square kilometres. I knew every corner of it. Construction has shrunk it to under two. I don't know this smaller version yet. My cubs were born into it. They don't know there was ever more.",
     action: 'Leave a corner of any garden, balcony, or community space uncut and unmowed this month. A patch of long grass is fox habitat.',
+    aftermath: "The unmowed corner of the courtyard grew into a tangle of grass and clover by October. The fox family found it within two weeks — using it first as cover, then as a hunting ground for mice. The cubs were seen playing there at dusk.",
+    imagePrompt: 'fox cubs playing in overgrown urban garden corner in Berlin at dusk, long grass and clover, warm golden light, wildlife photography',
   },
 
   // ── Bees ──────────────────────────────────────────────────────────
@@ -45,6 +53,8 @@ export const RESIDENTS = [
     detail: 'No flowering plant within 500m radius.',
     dispatch: "I have flown half a kilometre in every direction from my nest this morning. I found eight dandelions between paving stones and one geranium on a second-floor balcony. I need twenty kilograms of pollen to get my colony through winter. Right now I have enough for four days.",
     action: 'Plant one pot of lavender, borage, or phacelia on your windowsill or balcony. I will find it within 48 hours.',
+    aftermath: "The lavender pot appeared on a Rosenthaler Strasse windowsill on Tuesday. By Thursday the bee had found it, memorised the location, and returned eleven times before sunset. A second bee arrived by the weekend, following the pheromone trail.",
+    imagePrompt: 'solitary bee collecting pollen on lavender plant on Berlin apartment windowsill, warm afternoon sunlight, macro photography',
   },
   {
     id: 6, type: 'bee', lng: 13.403, lat: 52.479,
@@ -52,6 +62,8 @@ export const RESIDENTS = [
     detail: 'Glyphosate at 3× safe threshold near allotment gardens.',
     dispatch: "Something is wrong with the pollen near the allotment gardens. It's there, but when my sisters bring it back, the colony reacts badly. Three foragers haven't returned in two days. I don't know what is in the flowers. I just know something is different this year.",
     action: 'If you have a garden or allotment, switch to organic or pesticide-free. The approved list is at bioland.de.',
+    aftermath: "The allotment switched to organic that season. In the weeks that followed, foragers began returning reliably with clean pollen from the southern plots. Three nearby colonies showed improved brood survival by August.",
+    imagePrompt: 'bee collecting pollen from organic garden flowers in Berlin allotment, no pesticides, warm summer morning, macro photography',
   },
   {
     id: 7, type: 'bee', lng: 13.352, lat: 52.548,
@@ -59,6 +71,8 @@ export const RESIDENTS = [
     detail: 'Freshly paved path covered 40 ground-nesting burrows.',
     dispatch: "My nest was a tunnel in a path on Koloniestrasse — 18 centimetres deep, lined with petals. It took three weeks to build. Last week someone paved over it. I am still looking for new ground. Most soil here is too hard or covered. I am still looking.",
     action: 'Leave a patch of bare, south-facing, sandy soil undisturbed in your garden or yard. This is exactly what solitary bees need to nest.',
+    aftermath: "A patch of bare sandy soil in the community garden was left undisturbed. Within three weeks a solitary bee had drilled a neat 18mm entrance. By late summer four neighbouring burrows had been established alongside the first.",
+    imagePrompt: 'solitary bee entering small burrow nest in sandy soil Berlin community garden, summer light, close-up macro photography',
   },
   {
     id: 8, type: 'bee', lng: 13.453, lat: 52.502,
@@ -66,6 +80,8 @@ export const RESIDENTS = [
     detail: 'Asphalt surface 41°C — nectar evaporates before harvest.',
     dispatch: "The flowers here have nectar, but when I arrive it has already evaporated — the asphalt is 41°C. I keep flying but there is nothing to collect. I am burning more energy than I am bringing back. I will try again at dawn, but by then the other bees will already be there.",
     action: 'Move outdoor planters to partial shade during heatwaves. Nectar survives longer in cooler, shadier conditions.',
+    aftermath: "The planters were moved to morning shade. Nectar lasted until midday instead of evaporating by 9am. The bee's energy balance turned positive again — more calories carried home than burned searching empty flowers.",
+    imagePrompt: 'bee collecting nectar from shaded potted flowers on Berlin balcony in afternoon, dappled shadow, warm light, macro photography',
   },
 
   // ── Birds ─────────────────────────────────────────────────────────
@@ -75,6 +91,8 @@ export const RESIDENTS = [
     detail: '23 bird strikes at Sony Center this migration season.',
     dispatch: "I was flying south. I saw sky in the glass and flew toward it. I don't know what happened next — I was on the ground, unable to move my left wing for an hour. That building has taken seven of us this migration season. I go around it now. The birds arriving this week have not learned yet.",
     action: 'Put vertical strips of tape or UV-reflective stickers on large glass surfaces. 5cm wide, 10cm apart. Birds see the pattern. Takes ten minutes.',
+    aftermath: "The tape strips went up on the Sony Center facade in a single afternoon. That migration week strikes dropped from seven to one. The birds that had learned the detour continued south. The new arrivals followed their lead.",
+    imagePrompt: 'migratory bird flying safely past glass building with vertical tape strips in Berlin, dawn light, wings spread wide, wildlife photography',
   },
   {
     id: 10, type: 'bird', lng: 13.414, lat: 52.521,
@@ -82,6 +100,8 @@ export const RESIDENTS = [
     detail: 'Alexanderplatz glow visible 40km away. Birds circle for hours.',
     dispatch: "I navigate by stars. When I fly over Alexanderplatz, the light below erases them. I circle. Other birds circle. We call to each other — confused, exhausted. Sometimes I lose an hour before I find the darkness again. By then I've spent reserves I need for crossing the Alps.",
     action: 'Switch off non-essential lights between 10pm and 4am tonight. Close blinds. It is peak migration season — September through November.',
+    aftermath: "At 11pm the building's lights went dark. Within twenty minutes the birds circling Alexanderplatz dispersed — their star map suddenly legible again. A thrush found its bearing south within four minutes of the lights going out.",
+    imagePrompt: 'migratory birds navigating by stars over dark Berlin rooftops at night, Alexanderplatz lights dimmed, milky way visible, cinematic',
   },
   {
     id: 11, type: 'bird', lng: 13.440, lat: 52.483,
@@ -89,6 +109,8 @@ export const RESIDENTS = [
     detail: 'Night construction drowns dawn chorus. No eggs this season.',
     dispatch: "My dawn chorus starts at 4:30am. Construction on Sonnenallee starts at 6am and drowns everything by 6:15. I call to establish territory, to find my mate, to say I am here. Lately no one answers. I don't know if they can't hear me or if they're no longer there.",
     action: 'Report pre-7am construction noise to your Bezirksamt. Template letters are at berlin.de/laerm — takes five minutes.',
+    aftermath: "The Bezirksamt issued a construction pause notice for early mornings. The first day after, the dawn chorus on Sonnenallee ran uninterrupted for ninety minutes. Two nesting pairs that had gone silent were heard calling again.",
+    imagePrompt: 'birds singing on Berlin rooftop at dawn in morning silence, sunrise pink sky, peaceful urban scene, wildlife photography',
   },
   {
     id: 12, type: 'bird', lng: 13.305, lat: 52.505,
@@ -96,6 +118,8 @@ export const RESIDENTS = [
     detail: 'Escaped parakeets occupy all traditional Swift nesting hollows.',
     dispatch: "I returned in April to find my hollow occupied by a parakeet — a pet species that escaped decades ago. I have nested here for seven years. I tried four times to return. The parakeet is larger than me. I built a new nest on a ledge instead. It's exposed. I'm not sure about the eggs.",
     action: 'Install a Swift nest box on your building\'s south or east wall. Swifts cannot make their own holes — they need yours. Plans at mauersegler.net.',
+    aftermath: "The nest box went up on the south wall in April. A swift pair inspected it within a week and moved in by May. They raised three chicks that season — the first successful clutch on that block in four years.",
+    imagePrompt: 'swift bird entering wooden nest box on Berlin apartment wall, summer daylight, wings spread, close-up wildlife photography',
   },
 
   // ── Trees ─────────────────────────────────────────────────────────
@@ -105,6 +129,8 @@ export const RESIDENTS = [
     detail: 'Linden runs 4.2°C above rural surroundings. Leaf drop 3 weeks early.',
     dispatch: "I am an eighty-year-old linden on Unter den Linden. In August my surface temperature was 4.2°C above the countryside. I dropped my leaves early to save water — a kind of emergency shutdown. Tourists photographed the bare branches as if they were interesting. They were not interesting. They were distress.",
     action: 'Water the nearest street tree — fifteen litres poured slowly at the drip line. Check if the city\'s Baumtränke watering bag is empty and refill it.',
+    aftermath: "Fifteen litres poured slowly at the drip line on Unter den Linden. The tree pulled the water in over two hours. Within ten days the remaining leaves stabilised — no further early drop. The Baumtränke bag was found empty and refilled by three passersby that week.",
+    imagePrompt: 'person watering old linden street tree in Berlin at dusk, cobblestone boulevard, warm golden light, photorealistic',
   },
   {
     id: 14, type: 'tree', lng: 13.450, lat: 52.481,
@@ -112,6 +138,8 @@ export const RESIDENTS = [
     detail: 'Root zone paved to 30cm of trunk. 80-year-old tree suffocating.',
     dispatch: "My roots need air as much as water. The paving goes right to my trunk. Soil is compressed to something close to stone. When it rains, the water runs into drains instead of reaching me. I am suffocating slowly. I was planted in 1943. I have perhaps eight years left.",
     action: 'Adopt a street tree at baumscheibe.org — the city lets you loosen soil and add mulch around the base. It takes twenty minutes.',
+    aftermath: "The baumscheibe adoption took twenty minutes. Compacted soil around the trunk was loosened and mulch added. Three weeks later the first sign: a thin thread of new root visible at the surface, growing outward toward air and water.",
+    imagePrompt: 'person loosening soil and adding mulch around old street tree in Berlin neighbourhood, gentle careful hands, photorealistic',
   },
   {
     id: 15, type: 'tree', lng: 13.308, lat: 52.506,
@@ -119,6 +147,8 @@ export const RESIDENTS = [
     detail: '47 dry days. Weekly water allowance 18L against a need of 150L.',
     dispatch: "47 days without significant rain. My city water allowance is 18 litres per week. I need 150. I am doing what I can — closing stomata, slowing growth, rerouting sugars. Last summer I lost three large branches. This summer the stress is worse. I don't know what comes after the branches.",
     action: 'Fill a watering can and water the nearest street tree. Look for dry cracked soil or early yellowing as signs of stress. Once a week makes a difference.',
+    aftermath: "Once a week for a month — fifty litres in total. The tree had already closed its stomata. After the second watering, new growth appeared at the branch tips: small, tentative, the palest green returning.",
+    imagePrompt: 'person watering drought-stressed street tree in Berlin summer heat, cracked dry pavement, watering can, photorealistic',
   },
   {
     id: 16, type: 'tree', lng: 13.470, lat: 52.540,
@@ -126,6 +156,8 @@ export const RESIDENTS = [
     detail: 'Road salt accumulated in root zone for 12 consecutive winters.',
     dispatch: "Road salt is spread near me every winter. Year after year it builds up in the soil. Salt pulls water out of my root cells through osmosis — the same process that kills plants in the sea. My leaves show it: brown tips, scorched edges, early drop. Twelve winters. It's getting harder to reverse.",
     action: 'Use sand or grit instead of salt on icy paths near trees in winter. Buy a small bag from a hardware store. Ask your Hausmeister to switch too.',
+    aftermath: "Sand replaced the salt on the path that winter. Spring brought fewer scorched leaf edges than any year since 2012. After twelve winters of accumulation, the soil salt level had begun — slowly, measurably — to fall.",
+    imagePrompt: 'healthy street tree in Berlin winter morning frost, path covered with sand instead of salt, pale sunlight, photorealistic',
   },
 
   // ── Boar ──────────────────────────────────────────────────────────
@@ -135,6 +167,8 @@ export const RESIDENTS = [
     detail: 'Sounder of 11 enclosed by three roads. No corridor to Spandau Forest.',
     dispatch: "There are eleven of us. The motorway to the west and three roads to the east have made this forest an island. We can smell the Spandau forest — we know there is food and space there — but there is no crossing that doesn't kill. Our range shrinks with each generation.",
     action: 'Support the Berlin wildlife corridor project at BUND Berlin. Sign the petition — it asks for underpasses on the AVUS. Takes 30 seconds.',
+    aftermath: "The corridor petition passed Berlin committee stage. A wildlife camera at the proposed underpass site recorded the first boar crossing at 2am — a sow with three piglets, moving east toward Spandau Forest for the first time in recorded history.",
+    imagePrompt: 'wild boar family walking safely through dark motorway wildlife underpass at night, forest on both sides, infrared trail camera photo',
   },
   {
     id: 18, type: 'boar', lng: 13.396, lat: 52.471,
@@ -142,6 +176,8 @@ export const RESIDENTS = [
     detail: 'Family crosses to Tempelhof Feld nightly. Wild foraging forgotten.',
     dispatch: "There is food on Tempelhof Feld every evening — bread, fruit, picnic leftovers. My family has been coming here for two years. It used to take six hours to forage in the forest. This takes twenty minutes. I'm not sure we still remember the long way.",
     action: "Don't leave food out in parks. Pack out all scraps, including organic waste. Feeding urban boar is illegal in Berlin and creates exactly this dependence.",
+    aftermath: "The picnic waste stopped accumulating overnight. Within two weeks the family's nightly visits to Tempelhof Feld had stopped. A wildlife camera in the Grunewald recorded them foraging again the following month — rooting, snuffling, remembering.",
+    imagePrompt: 'wild boar family rooting naturally in Grunewald forest floor at dawn, misty trees, Berlin suburbs distant, wildlife photography',
   },
   {
     id: 19, type: 'boar', lng: 13.332, lat: 52.567,
@@ -149,6 +185,8 @@ export const RESIDENTS = [
     detail: 'Ban cut caloric intake 40% entering winter. Piglets underweight.',
     dispatch: "The neighbourhood voted to stop feeding us last spring. I understand — we were becoming too bold. But I hadn't prepared for winter expecting the food to continue. My family has lost fifteen percent of body weight entering the cold months. The piglets are thin.",
     action: 'Plant a native crabapple, hawthorn, or rowan in your garden. These feed foxes, boar, and birds without direct contact or habituation.',
+    aftermath: "The crabapple was planted in a Wittestrasse garden in October. In three years it would bear fruit enough to sustain a boar family for a week. The planting was small, the gain was slow — but it was permanent, and it required no one to hand anything over.",
+    imagePrompt: 'wild boar eating crabapples under tree in Berlin suburban garden at dusk, natural foraging, warm autumn light, wildlife photography',
   },
 
   // ── Spree ─────────────────────────────────────────────────────────
@@ -158,6 +196,8 @@ export const RESIDENTS = [
     detail: 'Water 2.1°C above 1990 average. Oxygen drops. Pike cannot spawn.',
     dispatch: "The water here runs 2.1°C above its 1990 average. That sounds small. But I am a cold-water system — the pike, the crayfish, the aquatic plants are calibrated for a range I no longer reliably stay within. Oxygen drops as temperature rises. Some species have already left. Others are arriving who shouldn't be here.",
     action: 'Install a water butt to collect roof water from your building. It reduces the heat-loaded stormwater that drains into the Spree during storms.',
+    aftermath: "The water butt caught 340 litres in its first month. Less heat-loaded runoff reached the Spree after rain events. The effect was small and cumulative — but in a river, small and cumulative is exactly how recovery works.",
+    imagePrompt: 'Spree river Berlin at dawn, clean water, heron fishing in mist, atmospheric reflections, photorealistic landscape photography',
   },
   {
     id: 21, type: 'spree', lng: 13.395, lat: 52.515,
@@ -165,6 +205,8 @@ export const RESIDENTS = [
     detail: '4,200 microplastic particles per litre at this point.',
     dispatch: "4,200 microplastic particles per litre. That is 4,200 fragments of someone's forgotten film wrap, fleece jacket, cigarette filter, tyre rubber. I carry what the city discards. The particles enter the food chain here and travel — into fish, birds, sediment, and eventually far beyond Berlin.",
     action: 'Replace one single-use plastic item with a reusable this week. Start with whatever you use most. One less piece entering the watershed.',
+    aftermath: "One less plastic bag entered the watershed that week. Then another, from a neighbour who noticed the swap. The change was invisible at the river's surface — but it was real, and it subtracted from a count that had only ever grown.",
+    imagePrompt: 'Spree river Berlin clean water reflection at dawn, heron standing still, no plastic, morning mist, photorealistic landscape',
   },
   {
     id: 22, type: 'spree', lng: 13.448, lat: 52.505,
@@ -172,6 +214,8 @@ export const RESIDENTS = [
     detail: '15,000m³ of untreated sewage after rain. Happened 8 times this year.',
     dispatch: "After the storm on June 14th, 15,000 cubic metres of mixed stormwater and untreated sewage entered me in six hours. Oxygen dropped below survival threshold for most fish. I recovered in four days. This has happened eight times this year. Before 2018, it happened twice.",
     action: 'Even a small planted container on a balcony or roof reduces stormwater runoff. Green surfaces absorb rain instead of sending it straight to the drain.',
+    aftermath: "The planted balcony container absorbed rain that would otherwise have reached the drain within minutes. Over a season, hundreds of similar containers across Friedrichshain measurably reduced peak stormwater flow during heavy summer rain events.",
+    imagePrompt: 'green planted balcony containers in Berlin in rain, raindrops on leaves, water absorbed into soil, Spree river visible below, photorealistic',
   },
   {
     id: 23, type: 'spree', lng: 13.490, lat: 52.455,
@@ -179,5 +223,7 @@ export const RESIDENTS = [
     detail: 'Phosphate runoff triggers toxic bloom. Swimming banned. Heron gone.',
     dispatch: "Phosphate from fertilisers accumulates in the slow water here each summer. When it warms, cyanobacteria blooms — toxic, green, the swimming beach closed. The heron that fished this section every morning has moved upstream. I am not the problem. I am the record of the problem.",
     action: "Switch to phosphate-free fertiliser for your garden or balcony. Look for 'phosphatfrei' on the packaging — most standard products contain phosphates.",
+    aftermath: "The phosphate-free switch was made that summer. The Köpenick algae bloom was slightly less severe than the year before. The heron returned in August — one week earlier than any season since the ban began.",
+    imagePrompt: 'heron standing in clear blue water at Köpenick lake Berlin, no algae, summer morning light, reflections, photorealistic wildlife',
   },
 ]

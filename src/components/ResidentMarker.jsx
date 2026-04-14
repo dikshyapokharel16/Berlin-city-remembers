@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RESIDENT_TYPES } from '../data/residents'
+import { stressBadge } from '../theme'
 
 // Simple SVG icons — clear and minimal at any size
 const icons = {
@@ -195,10 +196,7 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
                   </div>
                   <div style={{
                     marginLeft: 'auto', flexShrink: 0,
-                    background: 'rgba(180,60,40,0.18)', border: '1px solid rgba(180,60,40,0.35)',
-                    borderRadius: 4, padding: '2px 6px',
-                    fontSize: 8, color: '#e07060', fontFamily: 'Inter',
-                    fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    ...stressBadge,
                   }}>
                     {resident.stress}
                   </div>

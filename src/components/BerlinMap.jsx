@@ -64,12 +64,10 @@ const BERLIN_KIEZE = [
 ].sort()
 
 // ── Earthy random palette — warm rust / terracotta / mist teal ───
-// Hue bands: rust-orange 8-30°, terracotta 18-38°, dusty rose 340-15°,
-//            mist teal 168-192°, muted brown 28-45°
-const HUE_BANDS = [[8,30],[18,38],[340,375],[168,192],[28,45]]
 function makeEarthyPalette(n) {
+  const bands = [[8,30],[18,38],[340,375],[168,192],[28,45]]
   return Array.from({ length: n }, (_, i) => {
-    const [lo, hi] = HUE_BANDS[i % HUE_BANDS.length]
+    const [lo, hi] = bands[i % bands.length]
     const hue  = Math.round(lo + Math.random() * (hi - lo)) % 360
     const sat  = 40 + Math.round(Math.random() * 28)   // 40–68% — earthy saturation
     const fill = 32 + Math.round(Math.random() * 18)   // 32–50% — rich but not washed
@@ -84,7 +82,7 @@ function makeEarthyPalette(n) {
 // ── Map layer specs ────────────────────────────────────────────────
 const districtFill = {
   id: 'districts-fill', type: 'fill',
-  paint: { 'fill-color': ['get', 'fillColor'], 'fill-opacity': 0.18 },
+  paint: { 'fill-color': ['get', 'fillColor'], 'fill-opacity': 0.28 },
 }
 const districtGlow = {
   id: 'districts-glow', type: 'line',
@@ -145,7 +143,7 @@ const buildings3d = {
   },
 }
 
-// Thin cyan cap on each rooftop — gives the neon skyline effect
+// Warm rust/terracotta cap on each rooftop
 const buildingsTop = {
   id: '3d-buildings-top', source: 'carto', 'source-layer': 'building',
   type: 'fill-extrusion', minzoom: 14,
@@ -486,12 +484,10 @@ export default function BerlinMap() {
           </Source>
         )}
 
-        {/* ── District name text boxes — HTML overlays so they render above 3D ── */}
-        {districtCentroids.map((d, i) => d.name && (
+        {/* ── District name text boxes — mounted only when visible ── */}
+        {showKiezLabels && districtCentroids.map((d, i) => d.name && (
           <Marker key={`kl-${i}`} longitude={d.lng} latitude={d.lat} anchor="center" style={{ zIndex: 5 }}>
             <div style={{
-              opacity: showKiezLabels ? 1 : 0,
-              transition: 'opacity 0.35s ease',
               pointerEvents: 'none',
               background: 'rgba(26,18,12,0.82)',
               border: `1.5px solid ${d.borderColor}`,
