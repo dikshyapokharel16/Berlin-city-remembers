@@ -657,8 +657,8 @@ export default function BerlinMap() {
       {/* ── Left panel ────────────────────────────────────────── */}
       <motion.div
         style={{
-          position: 'absolute', top: 28, left: 28,
-          display: 'flex', flexDirection: 'column', gap: 14,
+          position: 'absolute', top: 44, left: 28,
+          display: 'flex', flexDirection: 'column', gap: 20,
           zIndex: 10,
         }}
         initial={{ opacity: 0, y: -10 }}
@@ -668,26 +668,9 @@ export default function BerlinMap() {
         {/* Headline */}
         <div>
           <div style={{
-            fontFamily: 'Inter', fontSize: 10, fontWeight: 600,
-            letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: '#8ab8b2', marginBottom: 6,
-            display: 'flex', alignItems: 'center', gap: 8,
-            textShadow: '0 0 12px rgba(138,184,178,0.6)',
-          }}>
-            <motion.span style={{
-              display: 'inline-block', width: 6, height: 6,
-              borderRadius: '50%', background: '#8ab8b2',
-              boxShadow: '0 0 10px #8ab8b2, 0 0 20px rgba(138,184,178,0.5)',
-            }}
-              animate={{ opacity: [1, 0.2, 1] }}
-              transition={{ duration: 1.4, repeat: Infinity }}
-            />
-            Berlin · Live Conditions
-          </div>
-          <div style={{
-            fontFamily: "'Playfair Display', serif", fontSize: 26,
-            fontWeight: 700, letterSpacing: '0.06em',
-            color: 'rgba(237,228,216,0.95)', lineHeight: 1.1,
+            fontFamily: "'Playfair Display', serif", fontSize: 28,
+            fontWeight: 700, letterSpacing: '0.04em',
+            color: 'rgba(237,228,216,0.92)', lineHeight: 1.1,
             textShadow: '0 0 40px rgba(212,104,42,0.18)',
           }}>
             Who else lives here?
@@ -715,10 +698,10 @@ export default function BerlinMap() {
                 border: '1px solid rgba(212,104,42,0.28)',
                 borderRight: 'none',
                 borderRadius: suggestions.length > 0 ? '8px 0 0 0' : '8px 0 0 8px',
-                padding: '9px 14px',
+                padding: '11px 18px',
                 color: 'rgba(237,228,216,0.88)',
-                fontFamily: 'Inter', fontSize: 12,
-                outline: 'none', width: 185,
+                fontFamily: 'Inter', fontSize: 13,
+                outline: 'none', width: 195,
                 backdropFilter: 'blur(12px)',
                 letterSpacing: '0.03em',
                 transition: 'border-radius 0.1s',

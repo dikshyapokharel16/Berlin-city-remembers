@@ -196,7 +196,7 @@ const s = {
     background: 'rgba(30,22,16,0.97)',
     border: '1px solid rgba(212,104,42,0.14)',
     borderRadius: 16,
-    padding: '28px 28px 24px',
+    padding: '40px 36px 32px',
     boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,104,42,0.06)',
     display: 'flex', flexDirection: 'column', gap: 0,
     position: 'relative',
@@ -211,7 +211,7 @@ const s = {
   },
   header: {
     display: 'flex', alignItems: 'center',
-    gap: 14, marginBottom: 16,
+    gap: 14, marginBottom: 22,
   },
   iconBubble: {
     width: 48, height: 48, borderRadius: '50%',
@@ -225,16 +225,16 @@ const s = {
   },
   dispatch: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: 15.5, lineHeight: 1.75,
+    fontSize: 17, lineHeight: 1.88,
     color: 'rgba(237,228,216,0.84)',
     fontStyle: 'italic', fontWeight: 400,
-    margin: '0 0 20px',
+    margin: '0 0 28px',
   },
   actionBox: {
     border: '1px solid',
-    borderRadius: 10, padding: '14px 16px',
+    borderRadius: 10, padding: '20px 20px',
     background: 'rgba(212,104,42,0.04)',
-    marginBottom: 22,
+    marginBottom: 28,
   },
   actionLabel: {
     fontFamily: 'Inter', fontSize: 10, fontWeight: 700,
@@ -242,14 +242,14 @@ const s = {
     marginBottom: 8, display: 'flex', gap: 6, alignItems: 'center',
   },
   actionText: {
-    fontFamily: 'Inter', fontSize: 13, lineHeight: 1.65,
+    fontFamily: 'Inter', fontSize: 14, lineHeight: 1.65,
     color: 'rgba(212,190,168,0.7)', fontWeight: 300, margin: 0,
   },
   btnRow: {
-    display: 'flex', gap: 12,
+    display: 'flex', gap: 16,
   },
   btnSkip: {
-    flex: 1, padding: '12px 0',
+    flex: 1, padding: '15px 0',
     background: 'rgba(237,228,216,0.04)',
     border: '1px solid rgba(237,228,216,0.1)',
     borderRadius: 10, cursor: 'pointer',
@@ -259,7 +259,7 @@ const s = {
     transition: 'background 0.2s',
   },
   btnDo: {
-    flex: 1, padding: '12px 0',
+    flex: 1, padding: '15px 0',
     background: 'transparent',
     border: '1.5px solid',
     borderRadius: 10, cursor: 'pointer',

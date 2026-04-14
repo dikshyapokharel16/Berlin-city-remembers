@@ -361,11 +361,11 @@ const styles = {
     fontStyle: 'italic',
     fontWeight: 400,
     fontSize: 'clamp(16px, 2.5vw, 22px)',
-    letterSpacing: '0.12em',
+    letterSpacing: '0.16em',
     color: 'rgba(245,240,232,0.45)',
   },
   divider: {
-    width: 48,
+    width: 64,
     height: 1,
     background: 'rgba(212,104,42,0.45)',
     transformOrigin: 'left',
@@ -375,7 +375,7 @@ const styles = {
     fontWeight: 300,
     fontSize: 'clamp(11px, 1.5vw, 13px)',
     letterSpacing: '0.14em',
-    color: 'rgba(255,255,255,0.22)',
+    color: 'rgba(255,255,255,0.32)',
     textTransform: 'uppercase',
   },
   exitOverlay: {

@@ -106,14 +106,12 @@ export default function AftermathScreen({ resident, type, Icon, helperCount, kie
 
         {/* Population status */}
         <div style={{ ...s.statCell, borderColor: `${type.color}30` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-            <motion.div
-              style={{ width: 9, height: 9, borderRadius: '50%', background: popColor, flexShrink: 0 }}
-              animate={{ scale: [1, 1.25, 1], opacity: [1, 0.7, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <div style={{ ...s.statNum, fontSize: 13, margin: 0, lineHeight: 1 }}>{type.populationStatus}</div>
-          </div>
+          <motion.div
+            style={{ width: 9, height: 9, borderRadius: '50%', background: popColor, flexShrink: 0, marginBottom: 10 }}
+            animate={{ scale: [1, 1.25, 1], opacity: [1, 0.7, 1] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div style={{ ...s.statNum, fontSize: 14, marginBottom: 0, lineHeight: 1.2 }}>{type.populationStatus}</div>
           <div style={s.statLabel}>Population</div>
         </div>
 
@@ -152,7 +150,7 @@ const s = {
     background: 'rgba(30,22,16,0.97)',
     border: '1px solid rgba(212,104,42,0.14)',
     borderRadius: 16,
-    padding: '28px 28px 24px',
+    padding: '32px 32px 28px',
     boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,104,42,0.06)',
     display: 'flex', flexDirection: 'column', gap: 0,
     position: 'relative',
@@ -175,9 +173,9 @@ const s = {
     flexShrink: 0,
   },
   imgWrap: {
-    width: '100%', height: 200,
-    borderRadius: 10, overflow: 'hidden',
-    marginBottom: 20, position: 'relative',
+    width: '100%', height: 300,
+    borderRadius: 12, overflow: 'hidden',
+    marginBottom: 28, position: 'relative',
     background: 'rgba(255,255,255,0.04)',
   },
   skeleton: {
@@ -197,37 +195,37 @@ const s = {
   sectionLabel: {
     fontFamily: 'Inter', fontSize: 9, fontWeight: 600,
     letterSpacing: '0.2em', textTransform: 'uppercase',
-    color: 'rgba(212,168,136,0.35)', marginBottom: 10,
+    color: 'rgba(212,168,136,0.35)', marginBottom: 14,
   },
   narrative: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: 14.5, lineHeight: 1.78,
+    fontSize: 16, lineHeight: 1.88,
     color: 'rgba(237,228,216,0.82)',
     fontStyle: 'italic', fontWeight: 400,
-    margin: '0 0 22px',
+    margin: '0 0 32px',
   },
   statsRow: {
     display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-    gap: 10, marginBottom: 22,
+    gap: 10, marginBottom: 28,
   },
   statCell: {
     border: '1px solid',
-    borderRadius: 10, padding: '12px 14px',
+    borderRadius: 10, padding: '18px 16px',
     background: 'rgba(212,104,42,0.04)',
   },
   statNum: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: 22, fontWeight: 700,
+    fontSize: 26, fontWeight: 700,
     color: 'rgba(237,228,216,0.88)',
     lineHeight: 1, marginBottom: 6,
   },
   statLabel: {
     fontFamily: 'Inter', fontSize: 9, fontWeight: 500,
     letterSpacing: '0.1em', textTransform: 'uppercase',
-    color: 'rgba(212,190,168,0.35)',
+    color: 'rgba(212,190,168,0.35)', marginTop: 4,
   },
   backBtn: {
-    width: '100%', padding: '13px 0',
+    width: '100%', padding: '16px 0',
     background: 'transparent',
     border: '1.5px solid',
     borderRadius: 10, cursor: 'pointer',
