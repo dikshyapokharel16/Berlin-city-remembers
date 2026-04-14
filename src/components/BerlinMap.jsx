@@ -98,25 +98,25 @@ const districtLine = {
     'line-width': 1.2, 'line-opacity': 0.9,
   },
 }
-const districtLabel = {
-  id: 'districts-label', type: 'symbol',
-  minzoom: 8.5, maxzoom: 16,
-  layout: {
-    'text-field': ['coalesce', ['get','Gemeinde_n'], ['get','name'], ['get','Name'], ''],
-    'text-font': ['Open Sans Bold'],
-    'text-size': ['interpolate', ['linear'], ['zoom'], 8, 14, 10, 22, 12, 30, 14, 36],
-    'text-letter-spacing': 0.24,
-    'text-transform': 'uppercase',
-    'text-max-width': 10,
-    'text-anchor': 'center',
-  },
-  paint: {
-    'text-color': ['get', 'borderColor'],
-    'text-halo-color': 'rgba(2,3,12,0.98)',
-    'text-halo-width': 4,
-    'text-halo-blur': 1,
-  },
+// Compute bounding-box centre of a GeoJSON Polygon or MultiPolygon feature
+function featureCentroid(feature) {
+  let ring
+  if (feature.geometry.type === 'Polygon') {
+    ring = feature.geometry.coordinates[0]
+  } else {
+    // MultiPolygon — pick the largest outer ring by vertex count
+    ring = feature.geometry.coordinates.reduce((a, b) =>
+      a[0].length >= b[0].length ? a : b
+    )[0]
+  }
+  const lngs = ring.map(c => c[0])
+  const lats  = ring.map(c => c[1])
+  return {
+    lng: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+    lat: (Math.min(...lats) + Math.max(...lats)) / 2,
+  }
 }
+
 // OSM building heights: prefer render_height (derived from building:levels in OSM)
 // then explicit height tag, then fallback to 8 m (single storey)
 const OSM_H = ['coalesce', ['to-number', ['get', 'render_height'], null], ['to-number', ['get', 'height'], null], 8]
@@ -208,6 +208,7 @@ export default function BerlinMap() {
     bearing: 0,
   })
   const [districtData, setDistrictData] = useState(null)
+  const [districtCentroids, setDistrictCentroids] = useState([])
   const [is3D, setIs3D] = useState(false)
 
   const [inputVal, setInputVal]         = useState('')
@@ -221,10 +222,10 @@ export default function BerlinMap() {
 
   const [userPin, setUserPin]         = useState(null)   // { lng, lat, label }
   const [clickToPlace, setClickToPlace] = useState(false)
-  const [locLoading, setLocLoading]   = useState(false)
 
-  const zoom        = viewState.zoom
-  const showMarkers = zoom >= 11
+  const zoom           = viewState.zoom
+  const showMarkers    = zoom >= 11
+  const showKiezLabels = zoom >= 8.5 && zoom < 15
 
   // ── Live search suggestions: kiez names + Nominatim geocoding ────
   useEffect(() => {
@@ -274,16 +275,20 @@ export default function BerlinMap() {
     fetch(BERLIN_GEOJSON)
       .then(r => r.json())
       .then(data => {
-        setDistrictData({
-          ...data,
-          features: data.features.map((f, i) => {
-            const p = DISTRICT_PALETTE[i % DISTRICT_PALETTE.length]
-            return {
-              ...f,
-              properties: { ...f.properties, fillColor: p.fill, borderColor: p.border },
-            }
-          }),
+        const coloured = data.features.map((f, i) => {
+          const p = DISTRICT_PALETTE[i % DISTRICT_PALETTE.length]
+          return {
+            ...f,
+            properties: { ...f.properties, fillColor: p.fill, borderColor: p.border },
+          }
         })
+        setDistrictData({ ...data, features: coloured })
+        setDistrictCentroids(
+          coloured.map(f => {
+            const name = f.properties.Gemeinde_n || f.properties.name || f.properties.Name || ''
+            return { ...featureCentroid(f), name, borderColor: f.properties.borderColor }
+          })
+        )
       })
       .catch(() => {})
   }, [])
@@ -348,21 +353,9 @@ export default function BerlinMap() {
     setSubmittedKiez('')
   }, [])
 
-  // ── Add / detect user location ────────────────────────────────
+  // ── Activate click-to-place mode ────────────────────────────
   const handleAddLocation = useCallback(() => {
-    if (!navigator.geolocation) { setClickToPlace(true); return }
-    setLocLoading(true)
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        setLocLoading(false)
-        const { longitude: lng, latitude: lat } = pos.coords
-        setUserPin({ lng, lat, label: 'Your location' })
-        setIs3D(true)
-        mapRef.current?.getMap()?.easeTo({ center: [lng, lat], zoom: 16, pitch: 52, bearing: -18, duration: 1800 })
-      },
-      () => { setLocLoading(false); setClickToPlace(true) },
-      { timeout: 8000, maximumAge: 60000 }
-    )
+    setClickToPlace(true)
   }, [])
 
   const handleMapClick = useCallback(e => {
@@ -463,7 +456,6 @@ export default function BerlinMap() {
             <Layer {...districtFill} />
             <Layer {...districtGlow} />
             <Layer {...districtLine} />
-            <Layer {...districtLabel} />
           </Source>
         )}
 
@@ -491,6 +483,35 @@ export default function BerlinMap() {
           </Source>
         )}
 
+        {/* ── District name text boxes — HTML overlays so they render above 3D ── */}
+        {districtCentroids.map((d, i) => d.name && (
+          <Marker key={`kl-${i}`} longitude={d.lng} latitude={d.lat} anchor="center" style={{ zIndex: 5 }}>
+            <div style={{
+              opacity: showKiezLabels ? 1 : 0,
+              transition: 'opacity 0.35s ease',
+              pointerEvents: 'none',
+              background: 'rgba(2,3,12,0.78)',
+              border: `1.5px solid ${d.borderColor}`,
+              borderRadius: 7,
+              padding: '5px 12px',
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: d.borderColor,
+              textShadow: `0 0 14px ${d.borderColor}, 0 0 28px ${d.borderColor}66`,
+              boxShadow: `0 0 20px ${d.borderColor}33, 0 2px 12px rgba(0,0,0,0.7)`,
+              backdropFilter: 'blur(10px)',
+              whiteSpace: 'nowrap',
+              userSelect: 'none',
+              lineHeight: 1,
+            }}>
+              {d.name}
+            </div>
+          </Marker>
+        ))}
+
         <Layer {...buildings3d} />
         <Layer {...buildingsTop} />
 
@@ -506,26 +527,31 @@ export default function BerlinMap() {
 
         <NavigationControl position="top-right" style={{ marginTop: 90 }} />
 
-        {/* ── User-dropped pin ──────────────────────────────── */}
+        {/* ── User-dropped pin (draggable) ──────────────────── */}
         {userPin && (
-          <Marker longitude={userPin.lng} latitude={userPin.lat} anchor="bottom">
+          <Marker
+            longitude={userPin.lng} latitude={userPin.lat} anchor="bottom"
+            draggable
+            onDragStart={() => setUserPin(p => ({ ...p, dragging: true }))}
+            onDragEnd={e => setUserPin(p => ({ ...p, lng: e.lngLat.lng, lat: e.lngLat.lat, dragging: false }))}
+          >
             <motion.div
-              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'grab' }}
               initial={{ opacity: 0, y: -12, scale: 0.7 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              onClick={() => setUserPin(null)}
-              title="Click to remove"
             >
-              {/* Pulse ring */}
-              <motion.div style={{
-                position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
-                width: 40, height: 40, borderRadius: '50%',
-                border: '2px solid #ffcc00', pointerEvents: 'none',
-              }}
-                animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{ duration: 2.4, repeat: Infinity }}
-              />
+              {/* Pulse ring — hidden while dragging */}
+              {!userPin.dragging && (
+                <motion.div style={{
+                  position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
+                  width: 40, height: 40, borderRadius: '50%',
+                  border: '2px solid #ffcc00', pointerEvents: 'none',
+                }}
+                  animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+                  transition={{ duration: 2.4, repeat: Infinity }}
+                />
+              )}
               {/* Pin bubble */}
               <div style={{
                 background: 'rgba(10,10,18,0.95)', border: '2px solid #ffcc00',
@@ -536,16 +562,16 @@ export default function BerlinMap() {
               }}>
                 <span style={{ transform: 'rotate(45deg)', fontSize: 14 }}>📍</span>
               </div>
-              {/* Label */}
+              {/* Coordinates label */}
               <div style={{
                 marginTop: 4,
                 background: 'rgba(10,10,18,0.9)', border: '1px solid rgba(255,204,0,0.4)',
                 borderRadius: 6, padding: '3px 8px',
-                fontFamily: 'Inter', fontSize: 9.5, fontWeight: 600,
-                letterSpacing: '0.08em', color: '#ffcc00',
+                fontFamily: 'Inter', fontSize: 9, fontWeight: 600,
+                letterSpacing: '0.06em', color: '#ffcc00',
                 whiteSpace: 'nowrap',
               }}>
-                {userPin.label}
+                {userPin.lat.toFixed(4)}°, {userPin.lng.toFixed(4)}°
               </div>
             </motion.div>
           </Marker>
@@ -755,25 +781,25 @@ export default function BerlinMap() {
           </button>
         </form>
 
-        {/* ── Add / mark your location ──────────────────────── */}
+        {/* ── Pin a location on the map ─────────────────────── */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <motion.button
             onClick={handleAddLocation}
-            disabled={locLoading}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,204,0,0.07)',
-              border: '1px solid rgba(255,204,0,0.3)',
+              background: clickToPlace ? 'rgba(255,204,0,0.18)' : 'rgba(255,204,0,0.07)',
+              border: `1px solid ${clickToPlace ? 'rgba(255,204,0,0.7)' : 'rgba(255,204,0,0.3)'}`,
               borderRadius: 8, padding: '7px 13px',
               color: '#ffcc00', fontFamily: 'Inter',
               fontSize: 10.5, fontWeight: 600, letterSpacing: '0.1em',
-              cursor: locLoading ? 'wait' : 'pointer',
+              cursor: 'pointer',
               textShadow: '0 0 10px rgba(255,204,0,0.5)',
+              transition: 'background 0.2s, border-color 0.2s',
             }}
-            whileHover={{ backgroundColor: 'rgba(255,204,0,0.14)', scale: 1.02 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
           >
-            {locLoading ? '…' : '+ Mark my location'}
+            📍 {clickToPlace ? 'Click the map…' : 'Add location on map'}
           </motion.button>
 
           {userPin && (
@@ -848,10 +874,10 @@ export default function BerlinMap() {
               boxShadow: '0 0 32px rgba(255,204,0,0.15)',
             }}>
               <div style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#ffcc00', marginBottom: 4 }}>
-                CLICK ANYWHERE TO DROP YOUR PIN
+                CLICK ANYWHERE IN BERLIN TO PIN
               </div>
               <div style={{ fontFamily: 'Inter', fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em' }}>
-                or press Escape to cancel
+                Drag the pin after to fine-tune · Esc to cancel
               </div>
             </div>
           </motion.div>
