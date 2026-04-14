@@ -224,8 +224,15 @@ export default function BerlinMap() {
   const [clickToPlace, setClickToPlace] = useState(false)
 
   const zoom           = viewState.zoom
-  const showMarkers    = zoom >= 11
+  const showMarkers    = zoom >= 9
   const showKiezLabels = zoom >= 8.5 && zoom < 15
+
+  // ── Random session subset — shuffled once on mount ────────────────
+  // At overview zoom show 14 random residents; zoomed in show all
+  const [sessionResidents] = useState(
+    () => [...RESIDENTS].sort(() => Math.random() - 0.5)
+  )
+  const activeResidents = zoom >= 12 ? RESIDENTS : sessionResidents.slice(0, 14)
 
   // ── Live search suggestions: kiez names + Nominatim geocoding ────
   useEffect(() => {
@@ -514,7 +521,7 @@ export default function BerlinMap() {
         <Layer {...buildings3d} />
         <Layer {...buildingsTop} />
 
-        {RESIDENTS.map(r => (
+        {activeResidents.map(r => (
           <Marker key={r.id} longitude={r.lng} latitude={r.lat} anchor="center">
             <ResidentMarker
               resident={r}
