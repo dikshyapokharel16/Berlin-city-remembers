@@ -196,6 +196,21 @@ function pickResident(kiez) {
   return RESIDENTS[Math.floor(Math.random() * RESIDENTS.length)]
 }
 
+function distanceMeters(lng1, lat1, lng2, lat2) {
+  const R = 6371000
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180
+  const Δφ = (lat2 - lat1) * Math.PI / 180
+  const Δλ = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function nearestResident(lng, lat) {
+  return [...RESIDENTS]
+    .map(r => ({ ...r, dist: distanceMeters(lng, lat, r.lng, r.lat) }))
+    .sort((a, b) => a.dist - b.dist)
+}
+
 // ── Component ──────────────────────────────────────────────────────
 export default function BerlinMap() {
   const mapRef = useRef()
@@ -222,6 +237,7 @@ export default function BerlinMap() {
 
   const [userPin, setUserPin]         = useState(null)   // { lng, lat, label }
   const [clickToPlace, setClickToPlace] = useState(false)
+  const [noDispatchMsg, setNoDispatchMsg] = useState(null)
 
   const zoom           = viewState.zoom
   const showMarkers    = zoom >= 9
@@ -431,6 +447,36 @@ export default function BerlinMap() {
     e.preventDefault()
     const val = inputVal.trim()
     if (val) flyToKiez(val)
+  }
+
+  const DISPATCH_RADIUS = 1500 // metres — max distance to show a dispatch for a pin
+
+  const handleSearchDispatch = () => {
+    setNoDispatchMsg(null)
+
+    if (userPin) {
+      // Find nearest resident to the dropped pin
+      const ranked = nearestResident(userPin.lng, userPin.lat)
+      const nearest = ranked[0]
+      if (nearest.dist <= DISPATCH_RADIUS) {
+        setPopup(nearest)
+      } else {
+        const distStr = nearest.dist < 1000
+          ? `${Math.round(nearest.dist)}m`
+          : `${(nearest.dist / 1000).toFixed(1)}km`
+        setNoDispatchMsg(`No dispatch within ${distStr} of your pin`)
+      }
+      return
+    }
+
+    if (submittedKiez) {
+      setPopup(pickResident(submittedKiez))
+      return
+    }
+
+    // Fall back: nearest to current viewport centre
+    const ranked = nearestResident(viewState.longitude, viewState.latitude)
+    setPopup(ranked[0])
   }
 
   const legend = Object.entries(RESIDENT_TYPES).map(([key, val]) => ({
@@ -770,7 +816,7 @@ export default function BerlinMap() {
 
         {/* ── Search dispatch ───────────────────────────────── */}
         <motion.button
-          onClick={() => setPopup(pickResident(submittedKiez || ''))}
+          onClick={handleSearchDispatch}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             background: 'rgba(0,245,255,0.07)',
@@ -791,8 +837,34 @@ export default function BerlinMap() {
             transition={{ duration: 1.8, repeat: Infinity }}
             style={{ fontSize: 9, lineHeight: 1 }}
           >◈</motion.span>
-          {submittedKiez ? `Dispatch from ${submittedKiez}` : 'Search dispatch near me'}
+          {userPin
+            ? 'Search dispatch near pin'
+            : submittedKiez
+              ? `Dispatch from ${submittedKiez}`
+              : 'Search dispatch near me'}
         </motion.button>
+
+        {/* No-dispatch message */}
+        <AnimatePresence>
+          {noDispatchMsg && (
+            <motion.div
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                background: 'rgba(255,0,80,0.07)',
+                border: '1px solid rgba(255,0,80,0.25)',
+                borderRadius: 8, padding: '7px 12px',
+                fontFamily: 'Inter', fontSize: 10, fontWeight: 500,
+                letterSpacing: '0.06em', color: 'rgba(255,80,100,0.8)',
+              }}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <span style={{ fontSize: 9, opacity: 0.7 }}>✕</span>
+              {noDispatchMsg}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Pin a location on the map ─────────────────────── */}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
