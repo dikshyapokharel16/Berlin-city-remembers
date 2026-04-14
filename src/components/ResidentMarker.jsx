@@ -129,7 +129,7 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
               width: 42,
               height: 42,
               borderRadius: '50%',
-              background: `rgba(10,10,18,0.82)`,
+              background: `rgba(28,18,12,0.86)`,
               border: `2px solid ${type.color}`,
               display: 'flex',
               alignItems: 'center',
@@ -152,13 +152,13 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
                   bottom: 52, left: '50%',
                   transform: 'translateX(-50%)',
                   width: 210,
-                  background: 'rgba(7,7,13,0.96)',
+                  background: 'rgba(26,16,10,0.97)',
                   border: `1px solid ${type.color}55`,
                   borderRadius: 10,
                   padding: '12px 14px',
                   backdropFilter: 'blur(16px)',
                   pointerEvents: 'none',
-                  boxShadow: `0 8px 32px rgba(0,0,0,0.7)`,
+                  boxShadow: `0 8px 32px rgba(0,0,0,0.6)`,
                   zIndex: 300,
                 }}
                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
@@ -171,7 +171,7 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
                   position: 'absolute', bottom: -5, left: '50%',
                   transform: 'translateX(-50%) rotate(45deg)',
                   width: 8, height: 8,
-                  background: 'rgba(7,7,13,0.96)',
+                  background: 'rgba(26,16,10,0.97)',
                   borderRight: `1px solid ${type.color}55`,
                   borderBottom: `1px solid ${type.color}55`,
                 }} />
@@ -189,15 +189,15 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
                     <div style={{ color: type.color, fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', fontFamily: 'Inter' }}>
                       {type.label}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9.5, fontFamily: 'Inter', letterSpacing: '0.06em' }}>
+                    <div style={{ color: 'rgba(212,190,168,0.45)', fontSize: 9.5, fontFamily: 'Inter', letterSpacing: '0.06em' }}>
                       {resident.kiez}
                     </div>
                   </div>
                   <div style={{
                     marginLeft: 'auto', flexShrink: 0,
-                    background: 'rgba(255,80,80,0.14)', border: '1px solid rgba(255,80,80,0.3)',
+                    background: 'rgba(180,60,40,0.18)', border: '1px solid rgba(180,60,40,0.35)',
                     borderRadius: 4, padding: '2px 6px',
-                    fontSize: 8, color: '#ff7070', fontFamily: 'Inter',
+                    fontSize: 8, color: '#e07060', fontFamily: 'Inter',
                     fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase',
                   }}>
                     {resident.stress}
@@ -205,7 +205,7 @@ export default function ResidentMarker({ resident, visible, onMarkerClick }) {
                 </div>
 
                 <p style={{
-                  color: 'rgba(255,255,255,0.45)', fontSize: 10.5,
+                  color: 'rgba(212,190,168,0.6)', fontSize: 10.5,
                   lineHeight: 1.6, fontWeight: 300, fontFamily: 'Inter', margin: 0,
                 }}>
                   {resident.detail}

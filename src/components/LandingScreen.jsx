@@ -250,7 +250,7 @@ const styles = {
     position: 'relative',
     width: '100vw',
     height: '100vh',
-    background: '#07070d',
+    background: '#1c1612',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -260,9 +260,9 @@ const styles = {
     position: 'absolute',
     inset: 0,
     background: `
-      radial-gradient(ellipse 80% 60% at 25% 80%, #0a1f3a 0%, transparent 65%),
-      radial-gradient(ellipse 60% 50% at 75% 20%, #0e1a0a 0%, transparent 60%),
-      radial-gradient(ellipse 100% 80% at 50% 100%, #120a00 0%, transparent 50%)
+      radial-gradient(ellipse 80% 60% at 25% 80%, #2a1608 0%, transparent 65%),
+      radial-gradient(ellipse 60% 50% at 75% 20%, #1e1a10 0%, transparent 60%),
+      radial-gradient(ellipse 100% 80% at 50% 100%, #2e1808 0%, transparent 50%)
     `,
     pointerEvents: 'none',
   },
@@ -302,8 +302,8 @@ const styles = {
     width: 5,
     height: 5,
     borderRadius: '50%',
-    background: '#4ad4a0',
-    boxShadow: '0 0 6px #4ad4a0',
+    background: '#d4682a',
+    boxShadow: '0 0 6px rgba(212,104,42,0.7)',
     animation: 'pulse 1.4s ease-in-out infinite',
   },
   barTrack: {
@@ -316,15 +316,15 @@ const styles = {
   },
   barFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, rgba(74,212,160,0.6), rgba(74,212,160,1))',
+    background: 'linear-gradient(90deg, rgba(212,104,42,0.6), rgba(212,104,42,1))',
     borderRadius: 1,
     transition: 'width 0.1s linear',
-    boxShadow: '0 0 8px rgba(74,212,160,0.8)',
+    boxShadow: '0 0 8px rgba(212,104,42,0.7)',
   },
   barGlow: {
     position: 'absolute',
     inset: 0,
-    background: 'rgba(74,212,160,0.4)',
+    background: 'rgba(212,104,42,0.3)',
     borderRadius: 1,
   },
   loadingMsg: {
@@ -367,7 +367,7 @@ const styles = {
   divider: {
     width: 48,
     height: 1,
-    background: 'rgba(74,212,160,0.5)',
+    background: 'rgba(212,104,42,0.45)',
     transformOrigin: 'left',
   },
   tagline: {
@@ -381,7 +381,7 @@ const styles = {
   exitOverlay: {
     position: 'absolute',
     inset: 0,
-    background: '#07070d',
+    background: '#1c1612',
     pointerEvents: 'none',
   },
 }

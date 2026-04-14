@@ -63,15 +63,17 @@ const BERLIN_KIEZE = [
   'Zehlendorf',
 ].sort()
 
-// ── Vibrant random palette — new colours on every page load ──────
-function makeVibrantPalette(n) {
-  // Spread hues evenly around the wheel then jitter each one slightly
-  const baseStep = 360 / n
+// ── Earthy random palette — warm rust / terracotta / mist teal ───
+// Hue bands: rust-orange 8-30°, terracotta 18-38°, dusty rose 340-15°,
+//            mist teal 168-192°, muted brown 28-45°
+const HUE_BANDS = [[8,30],[18,38],[340,375],[168,192],[28,45]]
+function makeEarthyPalette(n) {
   return Array.from({ length: n }, (_, i) => {
-    const hue  = Math.round((i * baseStep + Math.random() * baseStep * 0.6) % 360)
-    const sat  = 88 + Math.round(Math.random() * 12)   // 88–100 % — fully saturated
-    const fill = Math.round(48 + Math.random() * 14)    // 48–62 % lightness
-    const bord = Math.min(fill + 16, 82)                // border slightly lighter
+    const [lo, hi] = HUE_BANDS[i % HUE_BANDS.length]
+    const hue  = Math.round(lo + Math.random() * (hi - lo)) % 360
+    const sat  = 40 + Math.round(Math.random() * 28)   // 40–68% — earthy saturation
+    const fill = 32 + Math.round(Math.random() * 18)   // 32–50% — rich but not washed
+    const bord = Math.min(fill + 18, 70)
     return {
       fill:   `hsl(${hue},${sat}%,${fill}%)`,
       border: `hsl(${hue},${sat}%,${bord}%)`,
@@ -129,11 +131,11 @@ const buildings3d = {
     // Height-based colour: taller buildings shift from deep navy → dark indigo
     'fill-extrusion-color': [
       'interpolate', ['linear'], OSM_H,
-      0,   '#05060e',
-      15,  '#080c1a',
-      40,  '#0b1226',
-      80,  '#0e1830',
-      150, '#12203e',
+      0,   '#1c1612',
+      15,  '#2c1e16',
+      40,  '#3d2c1e',
+      80,  '#4a3020',
+      150, '#5a3820',
     ],
     'fill-extrusion-height': OSM_H,
     'fill-extrusion-base': OSM_BASE,
@@ -150,8 +152,8 @@ const buildingsTop = {
   paint: {
     'fill-extrusion-color': [
       'interpolate', ['linear'], OSM_H,
-      0,  '#00c8ff',
-      80, '#a855f7',  // tall buildings get a purple cap
+      0,  '#d4682a',  // rust warm orange cap
+      80, '#c07055',  // terracotta for tall buildings
     ],
     'fill-extrusion-height': OSM_H,
     'fill-extrusion-base': ['max', 0, ['-', OSM_H, 0.9]],
@@ -275,7 +277,7 @@ export default function BerlinMap() {
     fetch(BERLIN_GEOJSON)
       .then(r => r.json())
       .then(data => {
-        const palette  = makeVibrantPalette(data.features.length)
+        const palette  = makeEarthyPalette(data.features.length)
         const coloured = data.features.map((f, i) => {
           const p = palette[i]
           return {
@@ -435,7 +437,7 @@ export default function BerlinMap() {
 
   return (
     <motion.div
-      style={{ width: '100vw', height: '100vh', position: 'relative', background: '#02030c' }}
+      style={{ width: '100vw', height: '100vh', position: 'relative', background: '#1c1612' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2 }}
@@ -467,13 +469,13 @@ export default function BerlinMap() {
             <Layer
               id="kiez-highlight-fill"
               type="fill"
-              paint={{ 'fill-color': '#ffcc00', 'fill-opacity': 0.14 }}
+              paint={{ 'fill-color': '#e08858', 'fill-opacity': 0.14 }}
             />
             {/* wide outer glow */}
             <Layer
               id="kiez-highlight-glow"
               type="line"
-              paint={{ 'line-color': '#ffcc00', 'line-width': 16, 'line-blur': 28, 'line-opacity': 0.55 }}
+              paint={{ 'line-color': '#e08858', 'line-width': 16, 'line-blur': 28, 'line-opacity': 0.55 }}
             />
             {/* crisp inner border */}
             <Layer
@@ -491,7 +493,7 @@ export default function BerlinMap() {
               opacity: showKiezLabels ? 1 : 0,
               transition: 'opacity 0.35s ease',
               pointerEvents: 'none',
-              background: 'rgba(2,3,12,0.78)',
+              background: 'rgba(26,18,12,0.82)',
               border: `1.5px solid ${d.borderColor}`,
               borderRadius: 7,
               padding: '5px 12px',
@@ -547,7 +549,7 @@ export default function BerlinMap() {
                 <motion.div style={{
                   position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
                   width: 40, height: 40, borderRadius: '50%',
-                  border: '2px solid #ffcc00', pointerEvents: 'none',
+                  border: '2px solid #e08858', pointerEvents: 'none',
                 }}
                   animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
                   transition={{ duration: 2.4, repeat: Infinity }}
@@ -555,21 +557,21 @@ export default function BerlinMap() {
               )}
               {/* Pin bubble */}
               <div style={{
-                background: 'rgba(10,10,18,0.95)', border: '2px solid #ffcc00',
+                background: 'rgba(28,18,12,0.95)', border: '2px solid #e08858',
                 borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)',
                 width: 32, height: 32,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 18px #ffcc0077, 0 4px 12px rgba(0,0,0,0.6)',
+                boxShadow: '0 0 18px #e0885877, 0 4px 12px rgba(0,0,0,0.6)',
               }}>
                 <span style={{ transform: 'rotate(45deg)', fontSize: 14 }}>📍</span>
               </div>
               {/* Coordinates label */}
               <div style={{
                 marginTop: 4,
-                background: 'rgba(10,10,18,0.9)', border: '1px solid rgba(255,204,0,0.4)',
+                background: 'rgba(28,18,12,0.9)', border: '1px solid rgba(224,136,88,0.4)',
                 borderRadius: 6, padding: '3px 8px',
                 fontFamily: 'Inter', fontSize: 9, fontWeight: 600,
-                letterSpacing: '0.06em', color: '#ffcc00',
+                letterSpacing: '0.06em', color: '#e08858',
                 whiteSpace: 'nowrap',
               }}>
                 {userPin.lat.toFixed(4)}°, {userPin.lng.toFixed(4)}°
@@ -583,8 +585,8 @@ export default function BerlinMap() {
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
         backgroundImage: `
-          linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px)
+          linear-gradient(rgba(212,104,42,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(212,104,42,0.04) 1px, transparent 1px)
         `,
         backgroundSize: '64px 64px',
       }} />
@@ -592,7 +594,7 @@ export default function BerlinMap() {
       {/* ── Vignette ──────────────────────────────────────────── */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'radial-gradient(ellipse at center, transparent 35%, rgba(2,3,12,0.72) 100%)',
+        background: 'radial-gradient(ellipse at center, transparent 35%, rgba(18,12,8,0.72) 100%)',
       }} />
 
       {/* ── 2D/3D mode badge ──────────────────────────────────── */}
@@ -615,23 +617,23 @@ export default function BerlinMap() {
             >
               <div style={{
                 ...badge,
-                background: 'rgba(168,85,247,0.15)',
-                border: '1px solid rgba(168,85,247,0.55)',
-                color: '#cc88ff',
-                boxShadow: '0 0 18px rgba(168,85,247,0.25)',
-                textShadow: '0 0 10px rgba(168,85,247,0.9)',
+                background: 'rgba(192,112,85,0.15)',
+                border: '1px solid rgba(192,112,85,0.55)',
+                color: '#d4906e',
+                boxShadow: '0 0 18px rgba(192,112,85,0.25)',
+                textShadow: '0 0 10px rgba(192,112,85,0.9)',
               }}>
                 ◆ 3D MODE
               </div>
               <motion.button
                 style={{
                   ...badge, cursor: 'pointer',
-                  background: 'rgba(0,245,255,0.08)',
-                  border: '1px solid rgba(0,245,255,0.35)',
-                  color: '#00f5ff',
-                  textShadow: '0 0 8px #00f5ff',
+                  background: 'rgba(212,104,42,0.1)',
+                  border: '1px solid rgba(212,104,42,0.4)',
+                  color: '#d4682a',
+                  textShadow: '0 0 8px rgba(212,104,42,0.7)',
                 }}
-                whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(0,245,255,0.3)' }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(212,104,42,0.3)' }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleReset}
               >
@@ -642,9 +644,9 @@ export default function BerlinMap() {
             <motion.div key="2d"
               style={{
                 ...badge,
-                background: 'rgba(0,245,255,0.07)',
-                border: '1px solid rgba(0,245,255,0.2)',
-                color: 'rgba(0,245,255,0.6)',
+                background: 'rgba(138,184,178,0.07)',
+                border: '1px solid rgba(138,184,178,0.25)',
+                color: 'rgba(138,184,178,0.7)',
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -672,14 +674,14 @@ export default function BerlinMap() {
           <div style={{
             fontFamily: 'Inter', fontSize: 10, fontWeight: 600,
             letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: '#00f5ff', marginBottom: 6,
+            color: '#8ab8b2', marginBottom: 6,
             display: 'flex', alignItems: 'center', gap: 8,
-            textShadow: '0 0 12px #00f5ff',
+            textShadow: '0 0 12px rgba(138,184,178,0.6)',
           }}>
             <motion.span style={{
               display: 'inline-block', width: 6, height: 6,
-              borderRadius: '50%', background: '#00f5ff',
-              boxShadow: '0 0 10px #00f5ff, 0 0 20px #00f5ff',
+              borderRadius: '50%', background: '#8ab8b2',
+              boxShadow: '0 0 10px #8ab8b2, 0 0 20px rgba(138,184,178,0.5)',
             }}
               animate={{ opacity: [1, 0.2, 1] }}
               transition={{ duration: 1.4, repeat: Infinity }}
@@ -689,14 +691,14 @@ export default function BerlinMap() {
           <div style={{
             fontFamily: "'Playfair Display', serif", fontSize: 26,
             fontWeight: 700, letterSpacing: '0.06em',
-            color: 'rgba(210,235,255,0.95)', lineHeight: 1.1,
-            textShadow: '0 0 40px rgba(0,200,255,0.25)',
+            color: 'rgba(237,228,216,0.95)', lineHeight: 1.1,
+            textShadow: '0 0 40px rgba(212,104,42,0.18)',
           }}>
             Who else lives here?
           </div>
           <div style={{
             fontFamily: 'Inter', fontSize: 11, fontWeight: 300,
-            color: 'rgba(120,160,200,0.55)', marginTop: 5, letterSpacing: '0.04em',
+            color: 'rgba(155,130,110,0.65)', marginTop: 5, letterSpacing: '0.04em',
           }}>
             {locationSet
               ? `Viewing: ${submittedKiez}`
@@ -713,21 +715,21 @@ export default function BerlinMap() {
               onKeyDown={e => { if (e.key === 'Escape') setSuggestions([]) }}
               placeholder="Search Kiez, address, place…"
               style={{
-                background: 'rgba(2,3,12,0.92)',
-                border: '1px solid rgba(0,245,255,0.22)',
+                background: 'rgba(28,20,14,0.94)',
+                border: '1px solid rgba(212,104,42,0.28)',
                 borderRight: 'none',
                 borderRadius: suggestions.length > 0 ? '8px 0 0 0' : '8px 0 0 8px',
                 padding: '9px 14px',
-                color: 'rgba(210,235,255,0.88)',
+                color: 'rgba(237,228,216,0.88)',
                 fontFamily: 'Inter', fontSize: 12,
                 outline: 'none', width: 185,
                 backdropFilter: 'blur(12px)',
                 letterSpacing: '0.03em',
                 transition: 'border-radius 0.1s',
               }}
-              onFocus={e => { e.target.style.borderColor = 'rgba(0,245,255,0.6)'; e.target.style.boxShadow = '0 0 16px rgba(0,245,255,0.15)' }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(212,104,42,0.7)'; e.target.style.boxShadow = '0 0 16px rgba(212,104,42,0.18)' }}
               onBlur={e => {
-                e.target.style.borderColor = 'rgba(0,245,255,0.22)'
+                e.target.style.borderColor = 'rgba(212,104,42,0.28)'
                 e.target.style.boxShadow = 'none'
                 setTimeout(() => setSuggestions([]), 160)
               }}
@@ -736,8 +738,8 @@ export default function BerlinMap() {
             {suggestions.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0,
-                background: 'rgba(4,5,14,0.98)',
-                border: '1px solid rgba(0,245,255,0.22)', borderTop: 'none',
+                background: 'rgba(26,18,12,0.98)',
+                border: '1px solid rgba(212,104,42,0.25)', borderTop: 'none',
                 borderRadius: '0 0 8px 8px', overflow: 'hidden',
                 zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
               }}>
@@ -753,14 +755,14 @@ export default function BerlinMap() {
                     style={{
                       padding: '8px 14px',
                       fontFamily: 'Inter', fontSize: 12,
-                      color: 'rgba(200,225,255,0.75)', cursor: 'pointer',
+                      color: 'rgba(220,210,196,0.75)', cursor: 'pointer',
                       borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,245,255,0.09)'; e.currentTarget.style.color = '#fff' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(200,225,255,0.75)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,104,42,0.12)'; e.currentTarget.style.color = 'rgba(237,228,216,0.95)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(220,210,196,0.75)' }}
                   >
-                    <span style={{ fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0, color: s.type === 'kiez' ? 'rgba(0,245,255,0.5)' : 'rgba(255,204,0,0.55)' }}>
+                    <span style={{ fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0, color: s.type === 'kiez' ? 'rgba(138,184,178,0.7)' : 'rgba(224,136,88,0.7)' }}>
                       {s.type === 'kiez' ? 'Kiez' : '📍'}
                     </span>
                     {s.label}
@@ -770,13 +772,13 @@ export default function BerlinMap() {
             )}
           </div>
           <button type="submit" style={{
-            background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(168,85,247,0.2))',
-            border: '1px solid rgba(0,245,255,0.45)',
+            background: 'linear-gradient(135deg, rgba(212,104,42,0.22), rgba(192,112,85,0.22))',
+            border: '1px solid rgba(212,104,42,0.5)',
             borderRadius: suggestions.length > 0 ? '0 8px 0 0' : '0 8px 8px 0',
-            padding: '9px 16px', color: '#00f5ff',
+            padding: '9px 16px', color: '#d4682a',
             fontFamily: 'Inter', fontSize: 11, fontWeight: 700,
             letterSpacing: '0.12em', cursor: 'pointer',
-            textShadow: '0 0 8px #00f5ff', transition: 'border-radius 0.1s',
+            textShadow: '0 0 8px rgba(212,104,42,0.6)', transition: 'border-radius 0.1s',
           }}>
             GO
           </button>
@@ -788,13 +790,13 @@ export default function BerlinMap() {
             onClick={handleAddLocation}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: clickToPlace ? 'rgba(255,204,0,0.18)' : 'rgba(255,204,0,0.07)',
-              border: `1px solid ${clickToPlace ? 'rgba(255,204,0,0.7)' : 'rgba(255,204,0,0.3)'}`,
+              background: clickToPlace ? 'rgba(224,136,88,0.18)' : 'rgba(224,136,88,0.07)',
+              border: `1px solid ${clickToPlace ? 'rgba(224,136,88,0.7)' : 'rgba(224,136,88,0.3)'}`,
               borderRadius: 8, padding: '7px 13px',
-              color: '#ffcc00', fontFamily: 'Inter',
+              color: '#e08858', fontFamily: 'Inter',
               fontSize: 10.5, fontWeight: 600, letterSpacing: '0.1em',
               cursor: 'pointer',
-              textShadow: '0 0 10px rgba(255,204,0,0.5)',
+              textShadow: '0 0 10px rgba(224,136,88,0.5)',
               transition: 'background 0.2s, border-color 0.2s',
             }}
             whileHover={{ scale: 1.02 }}
@@ -829,19 +831,19 @@ export default function BerlinMap() {
             <motion.div
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 7,
-                background: 'rgba(0,245,255,0.07)',
-                border: '1px solid rgba(0,245,255,0.22)',
+                background: 'rgba(212,104,42,0.08)',
+                border: '1px solid rgba(212,104,42,0.3)',
                 borderRadius: 20, padding: '5px 12px',
                 fontFamily: 'Inter', fontSize: 10.5,
-                color: 'rgba(0,245,255,0.8)',
+                color: 'rgba(212,104,42,0.9)',
                 letterSpacing: '0.05em', alignSelf: 'flex-start',
-                boxShadow: '0 0 14px rgba(0,245,255,0.1)',
+                boxShadow: '0 0 14px rgba(212,104,42,0.12)',
               }}
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 6px #00f5ff' }} />
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#d4682a', boxShadow: '0 0 6px rgba(212,104,42,0.7)' }} />
               {submittedKiez} · dispatch incoming
             </motion.div>
           )}
@@ -863,18 +865,18 @@ export default function BerlinMap() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              style={{ fontSize: 36, filter: 'drop-shadow(0 0 16px #ffcc00)' }}
+              style={{ fontSize: 36, filter: 'drop-shadow(0 0 16px #e08858)' }}
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 1.4, repeat: Infinity }}
             >
               📍
             </motion.div>
             <div style={{
-              background: 'rgba(8,8,18,0.96)', border: '1px solid rgba(255,204,0,0.45)',
+              background: 'rgba(26,18,12,0.96)', border: '1px solid rgba(224,136,88,0.45)',
               borderRadius: 12, padding: '12px 20px', textAlign: 'center',
-              boxShadow: '0 0 32px rgba(255,204,0,0.15)',
+              boxShadow: '0 0 32px rgba(224,136,88,0.15)',
             }}>
-              <div style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#ffcc00', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#e08858', marginBottom: 4 }}>
                 CLICK ANYWHERE IN BERLIN TO PIN
               </div>
               <div style={{ fontFamily: 'Inter', fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em' }}>
@@ -889,7 +891,7 @@ export default function BerlinMap() {
       <AnimatePresence mode="wait">
         {!is3D && !showMarkers && (
           <motion.div key="zoom-hint"
-            style={{ ...hint, border: '1px solid rgba(0,245,255,0.25)', color: 'rgba(0,245,255,0.5)' }}
+            style={{ ...hint, border: '1px solid rgba(138,184,178,0.3)', color: 'rgba(138,184,178,0.65)' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
             exit={{ opacity: 0, y: 8 }}
@@ -900,7 +902,7 @@ export default function BerlinMap() {
         )}
         {!is3D && showMarkers && (
           <motion.div key="click-hint"
-            style={{ ...hint, border: '1px solid rgba(168,85,247,0.4)', color: 'rgba(204,136,255,0.65)' }}
+            style={{ ...hint, border: '1px solid rgba(192,112,85,0.4)', color: 'rgba(212,150,110,0.7)' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
             exit={{ opacity: 0, y: 8 }}
@@ -915,11 +917,11 @@ export default function BerlinMap() {
       <motion.div
         style={{
           position: 'absolute', bottom: 32, right: 24,
-          background: 'rgba(2,3,12,0.94)',
-          border: '1px solid rgba(0,245,255,0.1)',
+          background: 'rgba(26,18,12,0.94)',
+          border: '1px solid rgba(212,104,42,0.14)',
           borderRadius: 14, padding: '14px 16px',
           backdropFilter: 'blur(18px)',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,245,255,0.04)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,104,42,0.06)',
           minWidth: 190, zIndex: 10,
         }}
         initial={{ opacity: 0, x: 20 }}
@@ -928,7 +930,7 @@ export default function BerlinMap() {
       >
         <div style={{
           fontFamily: 'Inter', fontSize: 8.5, letterSpacing: '0.24em',
-          color: 'rgba(0,245,255,0.4)', textTransform: 'uppercase', marginBottom: 10,
+          color: 'rgba(138,184,178,0.45)', textTransform: 'uppercase', marginBottom: 10,
         }}>
           Non-human residents
         </div>
@@ -953,9 +955,9 @@ export default function BerlinMap() {
         ))}
         <div style={{
           marginTop: 10, paddingTop: 10,
-          borderTop: '1px solid rgba(0,245,255,0.07)',
+          borderTop: '1px solid rgba(212,104,42,0.1)',
           fontFamily: 'Inter', fontSize: 9,
-          color: 'rgba(0,245,255,0.22)', letterSpacing: '0.04em',
+          color: 'rgba(138,184,178,0.3)', letterSpacing: '0.04em',
         }}>
           Click marker → read dispatch → act
         </div>
@@ -966,7 +968,7 @@ export default function BerlinMap() {
         style={{
           position: 'absolute', bottom: 32, left: 28,
           fontFamily: 'Inter', fontSize: 9.5, letterSpacing: '0.1em',
-          color: 'rgba(120,155,200,0.3)', zIndex: 10,
+          color: 'rgba(155,130,110,0.38)', zIndex: 10,
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -979,7 +981,7 @@ export default function BerlinMap() {
 
       <div style={{
         position: 'absolute', bottom: 8, right: 8, zIndex: 10,
-        fontFamily: 'Inter', fontSize: 8, color: 'rgba(120,155,200,0.18)',
+        fontFamily: 'Inter', fontSize: 8, color: 'rgba(155,130,110,0.22)',
       }}>
         © OpenStreetMap · CARTO · Berlin Open Data
       </div>
@@ -1004,7 +1006,7 @@ const badge = {
 const hint = {
   position: 'absolute', bottom: 100, left: '50%',
   transform: 'translateX(-50%)',
-  background: 'rgba(2,3,12,0.88)',
+  background: 'rgba(26,18,12,0.9)',
   borderRadius: 24, padding: '9px 22px',
   fontFamily: 'Inter', fontSize: 10.5,
   letterSpacing: '0.13em', textTransform: 'uppercase',

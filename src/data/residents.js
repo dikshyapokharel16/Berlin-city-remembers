@@ -1,10 +1,10 @@
 export const RESIDENT_TYPES = {
-  fox:   { emoji: '🦊', color: '#e8824a', label: 'Urban Fox' },
-  bee:   { emoji: '🐝', color: '#f5c840', label: 'Solitary Bee' },
-  bird:  { emoji: '🐦', color: '#6ab4f0', label: 'Migratory Bird' },
-  tree:  { emoji: '🌳', color: '#4ad4a0', label: 'Linden Tree' },
-  boar:  { emoji: '🐗', color: '#b08055', label: 'Wild Boar' },
-  spree: { emoji: '🌊', color: '#4ac8e8', label: 'Spree River' },
+  fox:   { emoji: '🦊', color: '#d4682a', label: 'Urban Fox' },    // rust
+  bee:   { emoji: '🐝', color: '#e8a84a', label: 'Solitary Bee' }, // warm amber
+  bird:  { emoji: '🐦', color: '#8ab8b2', label: 'Migratory Bird' }, // mist teal
+  tree:  { emoji: '🌳', color: '#96b87e', label: 'Linden Tree' },  // muted olive
+  boar:  { emoji: '🐗', color: '#b07848', label: 'Wild Boar' },    // muted brown
+  spree: { emoji: '🌊', color: '#7aacb0', label: 'Spree River' },  // deeper teal
 }
 
 export const RESIDENTS = [

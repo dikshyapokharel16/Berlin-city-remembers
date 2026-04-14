@@ -107,15 +107,15 @@ export default function DispatchPopup({ resident, onClose }) {
                 <div style={{ color: type.color, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'Inter' }}>
                   {type.label}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontFamily: 'Inter', marginTop: 2 }}>
+                <div style={{ color: 'rgba(212,190,168,0.5)', fontSize: 12, fontFamily: 'Inter', marginTop: 2 }}>
                   {resident.kiez}
                 </div>
               </div>
               <div style={{
-                background: 'rgba(255,70,70,0.12)',
-                border: '1px solid rgba(255,70,70,0.3)',
+                background: 'rgba(180,60,40,0.18)',
+                border: '1px solid rgba(180,60,40,0.4)',
                 borderRadius: 6, padding: '4px 10px',
-                fontSize: 9, color: '#ff7777',
+                fontSize: 9, color: '#e07060',
                 fontWeight: 700, letterSpacing: '0.1em',
                 textTransform: 'uppercase', fontFamily: 'Inter',
                 alignSelf: 'flex-start',
@@ -125,7 +125,7 @@ export default function DispatchPopup({ resident, onClose }) {
             </div>
 
             {/* Divider */}
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0 16px' }} />
+            <div style={{ height: 1, background: 'rgba(212,168,136,0.1)', margin: '4px 0 16px' }} />
 
             {/* Dispatch — first-person narrative */}
             <div style={s.dispatchLabel}>Dispatch</div>
@@ -185,11 +185,11 @@ export default function DispatchPopup({ resident, onClose }) {
               <div style={{ transform: 'scale(1.8)' }}>{Icon && Icon(type.color)}</div>
             </motion.div>
 
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: 'rgba(245,240,232,0.9)' }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: 'rgba(237,228,216,0.92)' }}>
               Thank you.
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 13, textAlign: 'center', lineHeight: 1.7, fontFamily: 'Inter', fontWeight: 300, maxWidth: 260 }}>
+            <p style={{ color: 'rgba(212,190,168,0.5)', fontSize: 13, textAlign: 'center', lineHeight: 1.7, fontFamily: 'Inter', fontWeight: 300, maxWidth: 260 }}>
               The {type.label.toLowerCase()} in {resident.kiez} will notice.
             </p>
 
@@ -212,17 +212,17 @@ const s = {
   overlay: {
     position: 'fixed', inset: 0, zIndex: 1000,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,0,0,0.65)',
+    background: 'rgba(20,14,10,0.72)',
     backdropFilter: 'blur(8px)',
     padding: '20px',
   },
   card: {
     width: '100%', maxWidth: 480,
-    background: 'rgba(10,10,18,0.97)',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(30,22,16,0.97)',
+    border: '1px solid rgba(212,104,42,0.14)',
     borderRadius: 16,
     padding: '28px 28px 24px',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03)',
+    boxShadow: '0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,104,42,0.06)',
     display: 'flex', flexDirection: 'column', gap: 0,
     position: 'relative',
     maxHeight: '90vh', overflowY: 'auto',
@@ -230,7 +230,7 @@ const s = {
   closeBtn: {
     position: 'absolute', top: 16, right: 16,
     background: 'none', border: 'none',
-    color: 'rgba(255,255,255,0.25)', fontSize: 14,
+    color: 'rgba(237,228,216,0.3)', fontSize: 14,
     cursor: 'pointer', padding: '4px 6px', lineHeight: 1,
     fontFamily: 'Inter',
   },
@@ -246,19 +246,19 @@ const s = {
   dispatchLabel: {
     fontFamily: 'Inter', fontSize: 9, fontWeight: 600,
     letterSpacing: '0.2em', textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.2)', marginBottom: 10,
+    color: 'rgba(212,168,136,0.35)', marginBottom: 10,
   },
   dispatch: {
     fontFamily: "'Playfair Display', serif",
     fontSize: 15.5, lineHeight: 1.75,
-    color: 'rgba(245,240,232,0.82)',
+    color: 'rgba(237,228,216,0.84)',
     fontStyle: 'italic', fontWeight: 400,
     margin: '0 0 20px',
   },
   actionBox: {
     border: '1px solid',
     borderRadius: 10, padding: '14px 16px',
-    background: 'rgba(255,255,255,0.025)',
+    background: 'rgba(212,104,42,0.04)',
     marginBottom: 22,
   },
   actionLabel: {
@@ -268,17 +268,17 @@ const s = {
   },
   actionText: {
     fontFamily: 'Inter', fontSize: 13, lineHeight: 1.65,
-    color: 'rgba(255,255,255,0.62)', fontWeight: 300, margin: 0,
+    color: 'rgba(212,190,168,0.7)', fontWeight: 300, margin: 0,
   },
   btnRow: {
     display: 'flex', gap: 12,
   },
   btnSkip: {
     flex: 1, padding: '12px 0',
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(237,228,216,0.04)',
+    border: '1px solid rgba(237,228,216,0.1)',
     borderRadius: 10, cursor: 'pointer',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(237,228,216,0.38)',
     fontFamily: 'Inter', fontSize: 13, fontWeight: 500,
     letterSpacing: '0.04em',
     transition: 'background 0.2s',
