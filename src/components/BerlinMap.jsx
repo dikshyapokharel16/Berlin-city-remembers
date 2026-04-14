@@ -159,6 +159,20 @@ const buildingsTop = {
   },
 }
 
+// Geocode any Berlin neighbourhood via Nominatim (OSM, no API key required)
+async function geocodeKiez(name) {
+  try {
+    const q = encodeURIComponent(`${name}, Berlin`)
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=de`,
+      { headers: { 'Accept-Language': 'de' } }
+    )
+    const json = await res.json()
+    if (json[0]) return { lng: parseFloat(json[0].lon), lat: parseFloat(json[0].lat) }
+  } catch (_) {}
+  return null
+}
+
 function pickResident(kiez) {
   if (kiez) {
     const matches = RESIDENTS.filter(r =>
@@ -281,7 +295,7 @@ export default function BerlinMap() {
   }, [])
 
   // ── Fly to a kiez by name (shared by form submit + suggestion click)
-  const flyToKiez = useCallback((val) => {
+  const flyToKiez = useCallback(async (val) => {
     setSuggestions([])
     setSubmittedKiez(val)
     setLocationSet(true)
@@ -289,37 +303,41 @@ export default function BerlinMap() {
     clearTimeout(autoTimerRef.current)
 
     const valLower = val.toLowerCase()
-    const hits = RESIDENTS.filter(r =>
-      r.kiez.toLowerCase().includes(valLower) ||
-      valLower.includes(r.kiez.toLowerCase())
-    )
+
+    // 1. Try residents data (instant, exact kiez match)
+    const hits = RESIDENTS.filter(r => r.kiez.toLowerCase().includes(valLower))
+    let target = null
+
+    if (hits.length > 0) {
+      target = {
+        lng: hits.reduce((s, r) => s + r.lng, 0) / hits.length,
+        lat: hits.reduce((s, r) => s + r.lat, 0) / hits.length,
+      }
+    }
+
+    // 2. Try local KIEZ_COORDS table (instant)
+    if (!target) {
+      const key = Object.keys(KIEZ_COORDS).find(k =>
+        k.includes(valLower) || valLower.includes(k)
+      )
+      if (key) target = { lng: KIEZ_COORDS[key].lng, lat: KIEZ_COORDS[key].lat }
+    }
+
+    // 3. Geocode via Nominatim — covers every Berlin neighbourhood not in local data
+    if (!target) {
+      target = await geocodeKiez(val)
+    }
 
     const map = mapRef.current?.getMap()
-    if (map) {
-      let target = null
-
-      if (hits.length > 0) {
-        target = {
-          lng: hits.reduce((s, r) => s + r.lng, 0) / hits.length,
-          lat: hits.reduce((s, r) => s + r.lat, 0) / hits.length,
-        }
-      } else {
-        const entry = Object.entries(KIEZ_COORDS).find(([k]) =>
-          k.includes(valLower) || valLower.includes(k)
-        )
-        if (entry) target = { lng: entry[1].lng, lat: entry[1].lat }
-      }
-
-      if (target) {
-        setIs3D(true)
-        map.easeTo({
-          center: [target.lng, target.lat],
-          zoom: 15,          // street-level zoom
-          pitch: 52,
-          bearing: -18,
-          duration: 2200,
-        })
-      }
+    if (map && target) {
+      setIs3D(true)
+      map.easeTo({
+        center: [target.lng, target.lat],
+        zoom: 15,
+        pitch: 52,
+        bearing: -18,
+        duration: 2000,
+      })
     }
 
     setTimeout(() => {
