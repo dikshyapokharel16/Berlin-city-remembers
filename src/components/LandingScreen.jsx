@@ -238,4 +238,18 @@ const s = {
     color: '#00f5ff',
     border: '1px solid rgba(0,245,255,0.6)',
     borderRadius: 2,
-    padding: '14px 40px'
+    padding: '14px 40px',
+    cursor: 'pointer',
+    transition: 'background 0.2s, box-shadow 0.2s',
+    marginTop: 8,
+  },
+  coord: {
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 300,
+    fontSize: 9,
+    letterSpacing: '0.22em',
+    color: 'rgba(0,245,255,0.2)',
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+}
