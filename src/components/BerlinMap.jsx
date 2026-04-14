@@ -1,0 +1,540 @@
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Map, { Marker, Source, Layer, NavigationControl } from 'react-map-gl/maplibre'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { motion, AnimatePresence } from 'framer-motion'
+import ResidentMarker from './ResidentMarker'
+import DispatchPopup from './DispatchPopup'
+import { RESIDENTS, RESIDENT_TYPES } from '../data/residents'
+
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+const BERLIN_GEOJSON =
+  'https://tsb-opendata.s3.eu-central-1.amazonaws.com/bezirksgrenzen/bezirksgrenzen.geojson'
+
+// ── Neon district palette ──────────────────────────────────────────
+const DISTRICT_PALETTE = [
+  { fill: '#ff2d78', border: '#ff6699' }, // hot pink
+  { fill: '#a855f7', border: '#cc88ff' }, // electric purple
+  { fill: '#00d4ff', border: '#66e8ff' }, // electric cyan
+  { fill: '#ff7c00', border: '#ffaa55' }, // neon orange
+  { fill: '#22dd66', border: '#55ff99' }, // electric green
+  { fill: '#4466ff', border: '#88aaff' }, // electric blue
+  { fill: '#ff00aa', border: '#ff66cc' }, // magenta
+  { fill: '#dddd00', border: '#ffff44' }, // neon yellow
+  { fill: '#00ddcc', border: '#44ffee' }, // aqua
+  { fill: '#ff5500', border: '#ff8844' }, // neon red
+  { fill: '#88ff00', border: '#bbff44' }, // lime
+  { fill: '#cc44ff', border: '#ee88ff' }, // violet
+]
+
+// ── Map layer specs ────────────────────────────────────────────────
+const districtFill = {
+  id: 'districts-fill', type: 'fill',
+  paint: { 'fill-color': ['get', 'fillColor'], 'fill-opacity': 0.18 },
+}
+const districtGlow = {
+  id: 'districts-glow', type: 'line',
+  paint: {
+    'line-color': ['get', 'borderColor'],
+    'line-width': 8, 'line-blur': 10, 'line-opacity': 0.4,
+  },
+}
+const districtLine = {
+  id: 'districts-line', type: 'line',
+  paint: {
+    'line-color': ['get', 'borderColor'],
+    'line-width': 1.2, 'line-opacity': 0.9,
+  },
+}
+const districtLabel = {
+  id: 'districts-label', type: 'symbol',
+  minzoom: 8.5, maxzoom: 15,
+  layout: {
+    'text-field': ['coalesce', ['get','Gemeinde_n'], ['get','name'], ['get','Name'], ''],
+    'text-font': ['Open Sans Bold'],
+    'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 11, 15, 13, 18],
+    'text-letter-spacing': 0.2,
+    'text-transform': 'uppercase',
+    'text-max-width': 10,
+    'text-anchor': 'center',
+  },
+  paint: {
+    'text-color': ['get', 'borderColor'],
+    'text-halo-color': 'rgba(2,3,12,0.96)',
+    'text-halo-width': 2.5,
+  },
+}
+const buildings3d = {
+  id: '3d-buildings', source: 'carto', 'source-layer': 'building',
+  type: 'fill-extrusion', minzoom: 13,
+  paint: {
+    'fill-extrusion-color': '#080820',
+    'fill-extrusion-height': ['coalesce', ['to-number', ['get','height'], null], 14],
+    'fill-extrusion-base': ['coalesce', ['to-number', ['get','min_height'], null], 0],
+    'fill-extrusion-opacity': 0.92,
+  },
+}
+
+function pickResident(kiez) {
+  if (kiez) {
+    const matches = RESIDENTS.filter(r =>
+      r.kiez.toLowerCase().includes(kiez.toLowerCase())
+    )
+    if (matches.length > 0)
+      return matches[Math.floor(Math.random() * matches.length)]
+  }
+  return RESIDENTS[Math.floor(Math.random() * RESIDENTS.length)]
+}
+
+// ── Component ──────────────────────────────────────────────────────
+export default function BerlinMap() {
+  const mapRef = useRef()
+  const autoTimerRef = useRef()
+
+  const [viewState, setViewState] = useState({
+    longitude: 13.405, latitude: 52.52,
+    zoom: 10.5,
+    pitch: 0,     // START FLAT (2D)
+    bearing: 0,
+  })
+  const [districtData, setDistrictData] = useState(null)
+  const [is3D, setIs3D] = useState(false)
+
+  const [inputVal, setInputVal]       = useState('')
+  const [submittedKiez, setSubmittedKiez] = useState('')
+  const [locationSet, setLocationSet] = useState(false)
+
+  const [popup, setPopup]           = useState(null)
+  const [popupShown, setPopupShown] = useState(false)
+
+  const zoom        = viewState.zoom
+  const showMarkers = zoom >= 11
+
+  // ── Fetch + colorise districts ─────────────────────────────────
+  useEffect(() => {
+    fetch(BERLIN_GEOJSON)
+      .then(r => r.json())
+      .then(data => {
+        setDistrictData({
+          ...data,
+          features: data.features.map((f, i) => {
+            const p = DISTRICT_PALETTE[i % DISTRICT_PALETTE.length]
+            return {
+              ...f,
+              properties: { ...f.properties, fillColor: p.fill, borderColor: p.border },
+            }
+          }),
+        })
+      })
+      .catch(() => {})
+  }, [])
+
+  // ── Auto-popup after 14 s ──────────────────────────────────────
+  useEffect(() => {
+    autoTimerRef.current = setTimeout(() => {
+      if (!popupShown) {
+        setPopup(pickResident(null))
+        setPopupShown(true)
+      }
+    }, 14000)
+    return () => clearTimeout(autoTimerRef.current)
+  }, [])
+
+  // ── Click marker → fly to 3D + popup ──────────────────────────
+  const handleResidentClick = useCallback((resident) => {
+    const map = mapRef.current?.getMap()
+    if (map) {
+      map.easeTo({
+        center: [resident.lng, resident.lat],
+        zoom: 15.5,
+        pitch: 62,
+        bearing: -28,
+        duration: 2600,
+      })
+    }
+    setIs3D(true)
+    clearTimeout(autoTimerRef.current)
+    if (!popupShown) setPopupShown(true)
+    setTimeout(() => setPopup(resident), 1900)
+  }, [popupShown])
+
+  // ── Reset to flat 2D overview ──────────────────────────────────
+  const handleReset = useCallback(() => {
+    mapRef.current?.getMap()?.easeTo({
+      center: [13.405, 52.52],
+      zoom: 10.5, pitch: 0, bearing: 0, duration: 2000,
+    })
+    setIs3D(false)
+    setPopup(null)
+  }, [])
+
+  // ── Location submit ────────────────────────────────────────────
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const val = inputVal.trim()
+    if (!val) return
+    setSubmittedKiez(val)
+    setLocationSet(true)
+    clearTimeout(autoTimerRef.current)
+    setTimeout(() => {
+      if (!popupShown) {
+        setPopup(pickResident(val))
+        setPopupShown(true)
+      }
+    }, 1800)
+  }
+
+  const legend = Object.entries(RESIDENT_TYPES).map(([key, val]) => ({
+    key, ...val,
+    count: RESIDENTS.filter(r => r.type === key).length,
+  }))
+
+  return (
+    <motion.div
+      style={{ width: '100vw', height: '100vh', position: 'relative', background: '#02030c' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1.2 }}
+    >
+      {/* ── Map ───────────────────────────────────────────────── */}
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={e => setViewState(e.viewState)}
+        mapStyle={MAP_STYLE}
+        style={{ width: '100%', height: '100%' }}
+        attributionControl={false}
+      >
+        {districtData && (
+          <Source id="districts" type="geojson" data={districtData}>
+            <Layer {...districtFill} />
+            <Layer {...districtGlow} />
+            <Layer {...districtLine} />
+            <Layer {...districtLabel} />
+          </Source>
+        )}
+        <Layer {...buildings3d} />
+
+        {RESIDENTS.map(r => (
+          <Marker key={r.id} longitude={r.lng} latitude={r.lat} anchor="center">
+            <ResidentMarker
+              resident={r}
+              visible={showMarkers}
+              onMarkerClick={handleResidentClick}
+            />
+          </Marker>
+        ))}
+
+        <NavigationControl position="top-right" style={{ marginTop: 90 }} />
+      </Map>
+
+      {/* ── Grid overlay ──────────────────────────────────────── */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+        backgroundImage: `
+          linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: '64px 64px',
+      }} />
+
+      {/* ── Vignette ──────────────────────────────────────────── */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+        background: 'radial-gradient(ellipse at center, transparent 35%, rgba(2,3,12,0.72) 100%)',
+      }} />
+
+      {/* ── 2D/3D mode badge ──────────────────────────────────── */}
+      <motion.div
+        style={{
+          position: 'absolute', top: 28, right: 110,
+          display: 'flex', alignItems: 'center', gap: 10, zIndex: 10,
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <AnimatePresence mode="wait">
+          {is3D ? (
+            <motion.div key="3d"
+              style={{ display: 'flex', gap: 10 }}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 12 }}
+            >
+              <div style={{
+                ...badge,
+                background: 'rgba(168,85,247,0.15)',
+                border: '1px solid rgba(168,85,247,0.55)',
+                color: '#cc88ff',
+                boxShadow: '0 0 18px rgba(168,85,247,0.25)',
+                textShadow: '0 0 10px rgba(168,85,247,0.9)',
+              }}>
+                ◆ 3D MODE
+              </div>
+              <motion.button
+                style={{
+                  ...badge, cursor: 'pointer',
+                  background: 'rgba(0,245,255,0.08)',
+                  border: '1px solid rgba(0,245,255,0.35)',
+                  color: '#00f5ff',
+                  textShadow: '0 0 8px #00f5ff',
+                }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(0,245,255,0.3)' }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleReset}
+              >
+                ← Overview
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.div key="2d"
+              style={{
+                ...badge,
+                background: 'rgba(0,245,255,0.07)',
+                border: '1px solid rgba(0,245,255,0.2)',
+                color: 'rgba(0,245,255,0.6)',
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              ▦ 2D MAP
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* ── Left panel ────────────────────────────────────────── */}
+      <motion.div
+        style={{
+          position: 'absolute', top: 28, left: 28,
+          display: 'flex', flexDirection: 'column', gap: 14,
+          zIndex: 10,
+        }}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 1 }}
+      >
+        {/* Headline */}
+        <div>
+          <div style={{
+            fontFamily: 'Inter', fontSize: 10, fontWeight: 600,
+            letterSpacing: '0.28em', textTransform: 'uppercase',
+            color: '#00f5ff', marginBottom: 6,
+            display: 'flex', alignItems: 'center', gap: 8,
+            textShadow: '0 0 12px #00f5ff',
+          }}>
+            <motion.span style={{
+              display: 'inline-block', width: 6, height: 6,
+              borderRadius: '50%', background: '#00f5ff',
+              boxShadow: '0 0 10px #00f5ff, 0 0 20px #00f5ff',
+            }}
+              animate={{ opacity: [1, 0.2, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+            />
+            Berlin · Live Conditions
+          </div>
+          <div style={{
+            fontFamily: "'Playfair Display', serif", fontSize: 26,
+            fontWeight: 700, letterSpacing: '0.06em',
+            color: 'rgba(210,235,255,0.95)', lineHeight: 1.1,
+            textShadow: '0 0 40px rgba(0,200,255,0.25)',
+          }}>
+            Who else lives here?
+          </div>
+          <div style={{
+            fontFamily: 'Inter', fontSize: 11, fontWeight: 300,
+            color: 'rgba(120,160,200,0.55)', marginTop: 5, letterSpacing: '0.04em',
+          }}>
+            {locationSet
+              ? `Viewing: ${submittedKiez}`
+              : `${RESIDENTS.length} stress reports · click a marker to explore in 3D`}
+          </div>
+        </div>
+
+        {/* Location search */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex' }}>
+          <input
+            value={inputVal}
+            onChange={e => setInputVal(e.target.value)}
+            placeholder="Enter your Kiez…"
+            style={{
+              background: 'rgba(2,3,12,0.92)',
+              border: '1px solid rgba(0,245,255,0.22)',
+              borderRight: 'none',
+              borderRadius: '8px 0 0 8px',
+              padding: '9px 14px',
+              color: 'rgba(210,235,255,0.88)',
+              fontFamily: 'Inter', fontSize: 12,
+              outline: 'none', width: 185,
+              backdropFilter: 'blur(12px)',
+              letterSpacing: '0.03em',
+            }}
+            onFocus={e => { e.target.style.borderColor = 'rgba(0,245,255,0.6)'; e.target.style.boxShadow = '0 0 16px rgba(0,245,255,0.15)' }}
+            onBlur={e =>  { e.target.style.borderColor = 'rgba(0,245,255,0.22)'; e.target.style.boxShadow = 'none' }}
+          />
+          <button type="submit" style={{
+            background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(168,85,247,0.2))',
+            border: '1px solid rgba(0,245,255,0.45)',
+            borderRadius: '0 8px 8px 0',
+            padding: '9px 16px',
+            color: '#00f5ff', fontFamily: 'Inter',
+            fontSize: 11, fontWeight: 700,
+            letterSpacing: '0.12em', cursor: 'pointer',
+            textShadow: '0 0 8px #00f5ff',
+          }}>
+            GO
+          </button>
+        </form>
+
+        {/* Confirmed kiez pill */}
+        <AnimatePresence>
+          {locationSet && (
+            <motion.div
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                background: 'rgba(0,245,255,0.07)',
+                border: '1px solid rgba(0,245,255,0.22)',
+                borderRadius: 20, padding: '5px 12px',
+                fontFamily: 'Inter', fontSize: 10.5,
+                color: 'rgba(0,245,255,0.8)',
+                letterSpacing: '0.05em', alignSelf: 'flex-start',
+                boxShadow: '0 0 14px rgba(0,245,255,0.1)',
+              }}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#00f5ff', boxShadow: '0 0 6px #00f5ff' }} />
+              {submittedKiez} · dispatch incoming
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* ── Bottom hint ───────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        {!is3D && !showMarkers && (
+          <motion.div key="zoom-hint"
+            style={{ ...hint, border: '1px solid rgba(0,245,255,0.25)', color: 'rgba(0,245,255,0.5)' }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          >
+            Scroll to zoom · markers appear at street level
+          </motion.div>
+        )}
+        {!is3D && showMarkers && (
+          <motion.div key="click-hint"
+            style={{ ...hint, border: '1px solid rgba(168,85,247,0.4)', color: 'rgba(204,136,255,0.65)' }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: [0.6, 1, 0.6], y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          >
+            Click a resident to dive into 3D · read their dispatch
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Legend ────────────────────────────────────────────── */}
+      <motion.div
+        style={{
+          position: 'absolute', bottom: 32, right: 24,
+          background: 'rgba(2,3,12,0.94)',
+          border: '1px solid rgba(0,245,255,0.1)',
+          borderRadius: 14, padding: '14px 16px',
+          backdropFilter: 'blur(18px)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,245,255,0.04)',
+          minWidth: 190, zIndex: 10,
+        }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.9 }}
+      >
+        <div style={{
+          fontFamily: 'Inter', fontSize: 8.5, letterSpacing: '0.24em',
+          color: 'rgba(0,245,255,0.4)', textTransform: 'uppercase', marginBottom: 10,
+        }}>
+          Non-human residents
+        </div>
+        {legend.map(item => (
+          <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
+            <span style={{ fontSize: 17, lineHeight: 1 }}>{item.emoji}</span>
+            <span style={{
+              fontFamily: 'Inter', fontSize: 12, flex: 1,
+              color: item.color, textShadow: `0 0 8px ${item.color}77`,
+            }}>
+              {item.label}
+            </span>
+            <span style={{
+              fontFamily: 'Inter', fontSize: 10,
+              color: 'rgba(120,160,200,0.35)',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: 4, padding: '1px 5px',
+            }}>
+              {item.count}
+            </span>
+          </div>
+        ))}
+        <div style={{
+          marginTop: 10, paddingTop: 10,
+          borderTop: '1px solid rgba(0,245,255,0.07)',
+          fontFamily: 'Inter', fontSize: 9,
+          color: 'rgba(0,245,255,0.22)', letterSpacing: '0.04em',
+        }}>
+          Click marker → read dispatch → act
+        </div>
+      </motion.div>
+
+      {/* ── Bottom-left status ────────────────────────────────── */}
+      <motion.div
+        style={{
+          position: 'absolute', bottom: 32, left: 28,
+          fontFamily: 'Inter', fontSize: 9.5, letterSpacing: '0.1em',
+          color: 'rgba(120,155,200,0.3)', zIndex: 10,
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+      >
+        {!is3D && zoom < 11  && '2D · Neighbourhood overview'}
+        {!is3D && zoom >= 11 && '2D · Kiez level · click to dive in'}
+        {is3D && '3D · Street level active · buildings extruded'}
+      </motion.div>
+
+      <div style={{
+        position: 'absolute', bottom: 8, right: 8, zIndex: 10,
+        fontFamily: 'Inter', fontSize: 8, color: 'rgba(120,155,200,0.18)',
+      }}>
+        © OpenStreetMap · CARTO · Berlin Open Data
+      </div>
+
+      {/* ── Dispatch Popup ────────────────────────────────────── */}
+      <AnimatePresence>
+        {popup && (
+          <DispatchPopup resident={popup} onClose={() => setPopup(null)} />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// Shared style snippets
+const badge = {
+  fontFamily: 'Inter', fontSize: 9, fontWeight: 700,
+  letterSpacing: '0.18em', textTransform: 'uppercase',
+  borderRadius: 8, padding: '6px 13px',
+  backdropFilter: 'blur(10px)',
+}
+const hint = {
+  position: 'absolute', bottom: 100, left: '50%',
+  transform: 'translateX(-50%)',
+  background: 'rgba(2,3,12,0.88)',
+  borderRadius: 24, padding: '9px 22px',
+  fontFamily: 'Inter', fontSize: 10.5,
+  letterSpacing: '0.13em', textTransform: 'uppercase',
+  backdropFilter: 'blur(12px)', whiteSpace: 'nowrap',
+  pointerEvents: 'none', zIndex: 10,
+}
