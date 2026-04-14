@@ -159,18 +159,30 @@ const buildingsTop = {
   },
 }
 
-// Geocode any Berlin neighbourhood via Nominatim (OSM, no API key required)
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search'
+// Berlin bounding box — keeps results inside the city
+const BERLIN_BOX = 'viewbox=13.09,52.68,13.76,52.34&bounded=1'
+
+// Single best match — used by flyToKiez fallback
 async function geocodeKiez(name) {
   try {
     const q = encodeURIComponent(`${name}, Berlin`)
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=de`,
-      { headers: { 'Accept-Language': 'de' } }
-    )
+    const res = await fetch(`${NOMINATIM}?q=${q}&format=json&limit=1&countrycodes=de&${BERLIN_BOX}`,
+      { headers: { 'Accept-Language': 'de' } })
     const json = await res.json()
     if (json[0]) return { lng: parseFloat(json[0].lon), lat: parseFloat(json[0].lat) }
   } catch (_) {}
   return null
+}
+
+// Up to N results — used for live search suggestions
+async function searchNominatim(query, limit = 5) {
+  try {
+    const q = encodeURIComponent(`${query}, Berlin`)
+    const res = await fetch(`${NOMINATIM}?q=${q}&format=json&limit=${limit}&countrycodes=de&${BERLIN_BOX}`,
+      { headers: { 'Accept-Language': 'de' } })
+    return await res.json()
+  } catch (_) { return [] }
 }
 
 function pickResident(kiez) {
@@ -207,8 +219,42 @@ export default function BerlinMap() {
   const [popup, setPopup]           = useState(null)
   const [popupShown, setPopupShown] = useState(false)
 
+  const [userPin, setUserPin]         = useState(null)   // { lng, lat, label }
+  const [clickToPlace, setClickToPlace] = useState(false)
+  const [locLoading, setLocLoading]   = useState(false)
+
   const zoom        = viewState.zoom
   const showMarkers = zoom >= 11
+
+  // ── Live search suggestions: kiez names + Nominatim geocoding ────
+  useEffect(() => {
+    const v = inputVal.trim()
+    if (v.length < 2) { setSuggestions([]); return }
+    const vl = v.toLowerCase()
+
+    // Instant local matches
+    const kiez = BERLIN_KIEZE
+      .filter(k => k.toLowerCase().includes(vl))
+      .slice(0, 3)
+      .map(k => ({ type: 'kiez', label: k }))
+    setSuggestions(kiez)
+
+    // Debounced Nominatim for addresses / landmarks
+    const t = setTimeout(async () => {
+      const geo = await searchNominatim(v)
+      const places = geo
+        .map(r => ({
+          type: 'place',
+          label: r.display_name.split(',')[0].trim(),
+          lng: parseFloat(r.lon),
+          lat: parseFloat(r.lat),
+        }))
+        .filter(p => !kiez.some(k => k.label.toLowerCase() === p.label.toLowerCase()))
+        .slice(0, 4)
+      setSuggestions([...kiez, ...places])
+    }, 380)
+    return () => clearTimeout(t)
+  }, [inputVal])
 
   // ── Filter district GeoJSON to the matched kiez for highlight ──
   const highlightData = useMemo(() => {
@@ -241,6 +287,14 @@ export default function BerlinMap() {
       })
       .catch(() => {})
   }, [])
+
+  // ── Cancel click-to-place on Escape ───────────────────────────
+  useEffect(() => {
+    if (!clickToPlace) return
+    const handler = e => { if (e.key === 'Escape') setClickToPlace(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [clickToPlace])
 
   // ── Auto-popup after 14 s ──────────────────────────────────────
   useEffect(() => {
@@ -294,8 +348,34 @@ export default function BerlinMap() {
     setSubmittedKiez('')
   }, [])
 
+  // ── Add / detect user location ────────────────────────────────
+  const handleAddLocation = useCallback(() => {
+    if (!navigator.geolocation) { setClickToPlace(true); return }
+    setLocLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setLocLoading(false)
+        const { longitude: lng, latitude: lat } = pos.coords
+        setUserPin({ lng, lat, label: 'Your location' })
+        setIs3D(true)
+        mapRef.current?.getMap()?.easeTo({ center: [lng, lat], zoom: 16, pitch: 52, bearing: -18, duration: 1800 })
+      },
+      () => { setLocLoading(false); setClickToPlace(true) },
+      { timeout: 8000, maximumAge: 60000 }
+    )
+  }, [])
+
+  const handleMapClick = useCallback(e => {
+    if (!clickToPlace) return
+    const { lng, lat } = e.lngLat
+    setUserPin({ lng, lat, label: 'Dropped pin' })
+    setClickToPlace(false)
+    setIs3D(true)
+    mapRef.current?.getMap()?.easeTo({ center: [lng, lat], zoom: 15, pitch: 52, bearing: -18, duration: 1200 })
+  }, [clickToPlace])
+
   // ── Fly to a kiez by name (shared by form submit + suggestion click)
-  const flyToKiez = useCallback(async (val) => {
+  const flyToKiez = useCallback(async (val, preCoords = null) => {
     setSuggestions([])
     setSubmittedKiez(val)
     setLocationSet(true)
@@ -304,27 +384,26 @@ export default function BerlinMap() {
 
     const valLower = val.toLowerCase()
 
-    // 1. Try residents data (instant, exact kiez match)
-    const hits = RESIDENTS.filter(r => r.kiez.toLowerCase().includes(valLower))
-    let target = null
+    // 0. Use pre-computed coords if provided (e.g. from a geocoded suggestion)
+    let target = preCoords
 
-    if (hits.length > 0) {
-      target = {
-        lng: hits.reduce((s, r) => s + r.lng, 0) / hits.length,
-        lat: hits.reduce((s, r) => s + r.lat, 0) / hits.length,
+    if (!target) {
+      // 1. Residents centroid
+      const hits = RESIDENTS.filter(r => r.kiez.toLowerCase().includes(valLower))
+      if (hits.length > 0) {
+        target = {
+          lng: hits.reduce((s, r) => s + r.lng, 0) / hits.length,
+          lat: hits.reduce((s, r) => s + r.lat, 0) / hits.length,
+        }
       }
     }
-
-    // 2. Try local KIEZ_COORDS table (instant)
     if (!target) {
-      const key = Object.keys(KIEZ_COORDS).find(k =>
-        k.includes(valLower) || valLower.includes(k)
-      )
+      // 2. Local KIEZ_COORDS table
+      const key = Object.keys(KIEZ_COORDS).find(k => k.includes(valLower) || valLower.includes(k))
       if (key) target = { lng: KIEZ_COORDS[key].lng, lat: KIEZ_COORDS[key].lat }
     }
-
-    // 3. Geocode via Nominatim — covers every Berlin neighbourhood not in local data
     if (!target) {
+      // 3. Nominatim geocoding — covers every Berlin neighbourhood
       target = await geocodeKiez(val)
     }
 
@@ -376,6 +455,8 @@ export default function BerlinMap() {
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
         onLoad={handleMapLoad}
+        onClick={handleMapClick}
+        cursor={clickToPlace ? 'crosshair' : 'grab'}
       >
         {districtData && (
           <Source id="districts" type="geojson" data={districtData}>
@@ -424,6 +505,51 @@ export default function BerlinMap() {
         ))}
 
         <NavigationControl position="top-right" style={{ marginTop: 90 }} />
+
+        {/* ── User-dropped pin ──────────────────────────────── */}
+        {userPin && (
+          <Marker longitude={userPin.lng} latitude={userPin.lat} anchor="bottom">
+            <motion.div
+              style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
+              initial={{ opacity: 0, y: -12, scale: 0.7 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+              onClick={() => setUserPin(null)}
+              title="Click to remove"
+            >
+              {/* Pulse ring */}
+              <motion.div style={{
+                position: 'absolute', bottom: 4, left: '50%', transform: 'translateX(-50%)',
+                width: 40, height: 40, borderRadius: '50%',
+                border: '2px solid #ffcc00', pointerEvents: 'none',
+              }}
+                animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+                transition={{ duration: 2.4, repeat: Infinity }}
+              />
+              {/* Pin bubble */}
+              <div style={{
+                background: 'rgba(10,10,18,0.95)', border: '2px solid #ffcc00',
+                borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)',
+                width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 18px #ffcc0077, 0 4px 12px rgba(0,0,0,0.6)',
+              }}>
+                <span style={{ transform: 'rotate(45deg)', fontSize: 14 }}>📍</span>
+              </div>
+              {/* Label */}
+              <div style={{
+                marginTop: 4,
+                background: 'rgba(10,10,18,0.9)', border: '1px solid rgba(255,204,0,0.4)',
+                borderRadius: 6, padding: '3px 8px',
+                fontFamily: 'Inter', fontSize: 9.5, fontWeight: 600,
+                letterSpacing: '0.08em', color: '#ffcc00',
+                whiteSpace: 'nowrap',
+              }}>
+                {userPin.label}
+              </div>
+            </motion.div>
+          </Marker>
+        )}
       </Map>
 
       {/* ── Grid overlay ──────────────────────────────────────── */}
@@ -551,22 +677,14 @@ export default function BerlinMap() {
           </div>
         </div>
 
-        {/* Location search + autocomplete */}
+        {/* ── Search any location ────────────────────────────── */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', position: 'relative' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <input
               value={inputVal}
-              onChange={e => {
-                const v = e.target.value
-                setInputVal(v)
-                if (v.trim().length < 1) { setSuggestions([]); return }
-                setSuggestions(
-                  BERLIN_KIEZE.filter(k => k.toLowerCase().includes(v.toLowerCase())).slice(0, 7)
-                )
-              }}
+              onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => { if (e.key === 'Escape') setSuggestions([]) }}
-              onBlur={() => setTimeout(() => setSuggestions([]), 150)}
-              placeholder="Enter your Kiez…"
+              placeholder="Search Kiez, address, place…"
               style={{
                 background: 'rgba(2,3,12,0.92)',
                 border: '1px solid rgba(0,245,255,0.22)',
@@ -581,38 +699,44 @@ export default function BerlinMap() {
                 transition: 'border-radius 0.1s',
               }}
               onFocus={e => { e.target.style.borderColor = 'rgba(0,245,255,0.6)'; e.target.style.boxShadow = '0 0 16px rgba(0,245,255,0.15)' }}
-              onBlur={e =>  { e.target.style.borderColor = 'rgba(0,245,255,0.22)'; e.target.style.boxShadow = 'none' }}
+              onBlur={e => {
+                e.target.style.borderColor = 'rgba(0,245,255,0.22)'
+                e.target.style.boxShadow = 'none'
+                setTimeout(() => setSuggestions([]), 160)
+              }}
             />
-            {/* Suggestions dropdown */}
+            {/* Suggestions: Kieze (instant) + addresses (geocoded) */}
             {suggestions.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0,
                 background: 'rgba(4,5,14,0.98)',
-                border: '1px solid rgba(0,245,255,0.22)',
-                borderTop: 'none',
-                borderRadius: '0 0 8px 8px',
-                overflow: 'hidden',
-                zIndex: 200,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                border: '1px solid rgba(0,245,255,0.22)', borderTop: 'none',
+                borderRadius: '0 0 8px 8px', overflow: 'hidden',
+                zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
               }}>
-                {suggestions.map((name, i) => (
+                {suggestions.map((s, i) => (
                   <div
-                    key={name}
-                    onMouseDown={() => { setInputVal(name); flyToKiez(name) }}
+                    key={s.label + i}
+                    onMouseDown={() => {
+                      setInputVal(s.label)
+                      s.type === 'place'
+                        ? flyToKiez(s.label, { lng: s.lng, lat: s.lat })
+                        : flyToKiez(s.label)
+                    }}
                     style={{
                       padding: '8px 14px',
                       fontFamily: 'Inter', fontSize: 12,
-                      color: 'rgba(200,225,255,0.75)',
-                      cursor: 'pointer',
-                      borderBottom: i < suggestions.length - 1
-                        ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                      color: 'rgba(200,225,255,0.75)', cursor: 'pointer',
+                      borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                       display: 'flex', alignItems: 'center', gap: 8,
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,245,255,0.09)'; e.currentTarget.style.color = '#00f5ff' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,245,255,0.09)'; e.currentTarget.style.color = '#fff' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(200,225,255,0.75)' }}
                   >
-                    <span style={{ fontSize: 9, color: 'rgba(0,245,255,0.4)' }}>▸</span>
-                    {name}
+                    <span style={{ fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0, color: s.type === 'kiez' ? 'rgba(0,245,255,0.5)' : 'rgba(255,204,0,0.55)' }}>
+                      {s.type === 'kiez' ? 'Kiez' : '📍'}
+                    </span>
+                    {s.label}
                   </div>
                 ))}
               </div>
@@ -622,16 +746,55 @@ export default function BerlinMap() {
             background: 'linear-gradient(135deg, rgba(0,245,255,0.2), rgba(168,85,247,0.2))',
             border: '1px solid rgba(0,245,255,0.45)',
             borderRadius: suggestions.length > 0 ? '0 8px 0 0' : '0 8px 8px 0',
-            padding: '9px 16px',
-            color: '#00f5ff', fontFamily: 'Inter',
-            fontSize: 11, fontWeight: 700,
+            padding: '9px 16px', color: '#00f5ff',
+            fontFamily: 'Inter', fontSize: 11, fontWeight: 700,
             letterSpacing: '0.12em', cursor: 'pointer',
-            textShadow: '0 0 8px #00f5ff',
-            transition: 'border-radius 0.1s',
+            textShadow: '0 0 8px #00f5ff', transition: 'border-radius 0.1s',
           }}>
             GO
           </button>
         </form>
+
+        {/* ── Add / mark your location ──────────────────────── */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <motion.button
+            onClick={handleAddLocation}
+            disabled={locLoading}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,204,0,0.07)',
+              border: '1px solid rgba(255,204,0,0.3)',
+              borderRadius: 8, padding: '7px 13px',
+              color: '#ffcc00', fontFamily: 'Inter',
+              fontSize: 10.5, fontWeight: 600, letterSpacing: '0.1em',
+              cursor: locLoading ? 'wait' : 'pointer',
+              textShadow: '0 0 10px rgba(255,204,0,0.5)',
+            }}
+            whileHover={{ backgroundColor: 'rgba(255,204,0,0.14)', scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            {locLoading ? '…' : '+ Mark my location'}
+          </motion.button>
+
+          {userPin && (
+            <motion.button
+              onClick={() => setUserPin(null)}
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, padding: '7px 10px',
+                color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter',
+                fontSize: 10.5, cursor: 'pointer',
+              }}
+              whileHover={{ backgroundColor: 'rgba(255,80,80,0.12)', color: '#ff7070' }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              ✕ Remove
+            </motion.button>
+          )}
+        </div>
 
         {/* Confirmed kiez pill */}
         <AnimatePresence>
@@ -657,6 +820,43 @@ export default function BerlinMap() {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* ── Click-to-place overlay ───────────────────────────── */}
+      <AnimatePresence>
+        {clickToPlace && (
+          <motion.div
+            style={{
+              position: 'absolute', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 30, pointerEvents: 'none',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+            }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              style={{ fontSize: 36, filter: 'drop-shadow(0 0 16px #ffcc00)' }}
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+            >
+              📍
+            </motion.div>
+            <div style={{
+              background: 'rgba(8,8,18,0.96)', border: '1px solid rgba(255,204,0,0.45)',
+              borderRadius: 12, padding: '12px 20px', textAlign: 'center',
+              boxShadow: '0 0 32px rgba(255,204,0,0.15)',
+            }}>
+              <div style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#ffcc00', marginBottom: 4 }}>
+                CLICK ANYWHERE TO DROP YOUR PIN
+              </div>
+              <div style={{ fontFamily: 'Inter', fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.05em' }}>
+                or press Escape to cancel
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Bottom hint ───────────────────────────────────────── */}
       <AnimatePresence mode="wait">
