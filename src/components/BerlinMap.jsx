@@ -63,14 +63,45 @@ const districtLabel = {
     'text-halo-width': 2.5,
   },
 }
+// OSM building heights: prefer render_height (derived from building:levels in OSM)
+// then explicit height tag, then fallback to 8 m (single storey)
+const OSM_H = ['coalesce', ['to-number', ['get', 'render_height'], null], ['to-number', ['get', 'height'], null], 8]
+const OSM_BASE = ['coalesce', ['to-number', ['get', 'render_min_height'], null], ['to-number', ['get', 'min_height'], null], 0]
+
 const buildings3d = {
   id: '3d-buildings', source: 'carto', 'source-layer': 'building',
   type: 'fill-extrusion', minzoom: 13,
   paint: {
-    'fill-extrusion-color': '#080820',
-    'fill-extrusion-height': ['coalesce', ['to-number', ['get','height'], null], 14],
-    'fill-extrusion-base': ['coalesce', ['to-number', ['get','min_height'], null], 0],
-    'fill-extrusion-opacity': 0.92,
+    // Height-based colour: taller buildings shift from deep navy → dark indigo
+    'fill-extrusion-color': [
+      'interpolate', ['linear'], OSM_H,
+      0,   '#05060e',
+      15,  '#080c1a',
+      40,  '#0b1226',
+      80,  '#0e1830',
+      150, '#12203e',
+    ],
+    'fill-extrusion-height': OSM_H,
+    'fill-extrusion-base': OSM_BASE,
+    // Fade in as you zoom — avoids a pop at zoom 13
+    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, 0.95],
+    'fill-extrusion-vertical-gradient': true,
+  },
+}
+
+// Thin cyan cap on each rooftop — gives the neon skyline effect
+const buildingsTop = {
+  id: '3d-buildings-top', source: 'carto', 'source-layer': 'building',
+  type: 'fill-extrusion', minzoom: 14,
+  paint: {
+    'fill-extrusion-color': [
+      'interpolate', ['linear'], OSM_H,
+      0,  '#00c8ff',
+      80, '#a855f7',  // tall buildings get a purple cap
+    ],
+    'fill-extrusion-height': OSM_H,
+    'fill-extrusion-base': ['max', 0, ['-', OSM_H, 0.9]],
+    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 16, 0.22],
   },
 }
 
@@ -158,6 +189,16 @@ export default function BerlinMap() {
   }, [popupShown])
 
   // ── Reset to flat 2D overview ──────────────────────────────────
+  // Configure directional light for realistic building shadows
+  const handleMapLoad = useCallback((e) => {
+    e.target.setLight({
+      anchor: 'viewport',
+      color: '#c8dfff',
+      intensity: 0.4,
+      position: [1.15, 210, 50],  // from southwest, ~40° above horizon
+    })
+  }, [])
+
   const handleReset = useCallback(() => {
     mapRef.current?.getMap()?.easeTo({
       center: [13.405, 52.52],
@@ -203,6 +244,7 @@ export default function BerlinMap() {
         mapStyle={MAP_STYLE}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
+        onLoad={handleMapLoad}
       >
         {districtData && (
           <Source id="districts" type="geojson" data={districtData}>
@@ -213,6 +255,7 @@ export default function BerlinMap() {
           </Source>
         )}
         <Layer {...buildings3d} />
+        <Layer {...buildingsTop} />
 
         {RESIDENTS.map(r => (
           <Marker key={r.id} longitude={r.lng} latitude={r.lat} anchor="center">
