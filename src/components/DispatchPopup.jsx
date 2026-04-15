@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RESIDENT_TYPES } from '../data/residents'
 import { stressBadge } from '../theme'
 import AftermathScreen from './AftermathScreen'
+import IgnoredScreen from './IgnoredScreen'
 import { incrementHelperCount, incrementKiezHealth } from '../utils/storage'
 import { icons } from './icons'
 
 export default function DispatchPopup({ resident, onClose }) {
-  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath'
+  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath' | 'ignored'
   const [helperCount, setHelperCount] = useState(0)
   const [kiezHealth, setKiezHealth] = useState(0)
   const type = RESIDENT_TYPES[resident.type]
@@ -96,7 +97,7 @@ export default function DispatchPopup({ resident, onClose }) {
                 style={s.btnSkip}
                 whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
                 whileTap={{ scale: 0.97 }}
-                onClick={onClose}
+                onClick={() => setPhase('ignored')}
               >
                 Ignore
               </motion.button>
@@ -125,6 +126,18 @@ export default function DispatchPopup({ resident, onClose }) {
           />
         )}
 
+        {/* ── Ignored screen ── */}
+        {phase === 'ignored' && (
+          <IgnoredScreen
+            key="ignored"
+            resident={resident}
+            type={type}
+            Icon={Icon}
+            onClose={onClose}
+            onReconsider={() => setPhase('dispatch')}
+          />
+        )}
+
       </AnimatePresence>
     </motion.div>
   )
@@ -140,11 +153,11 @@ const s = {
     padding: '20px',
   },
   card: {
-    width: '100%', maxWidth: 480,
+    width: '100%', maxWidth: 580,
     background: 'rgba(4,6,15,0.97)',
     border: '1px solid rgba(0,245,255,0.12)',
     borderRadius: 16,
-    padding: '40px 36px 32px',
+    padding: '48px 44px 36px',
     boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,245,255,0.05)',
     display: 'flex', flexDirection: 'column', gap: 0,
     position: 'relative',
@@ -189,7 +202,7 @@ const s = {
   },
   dispatch: {
     fontFamily: "'Playfair Display', serif",
-    fontSize: 17, lineHeight: 1.88,
+    fontSize: 18, lineHeight: 1.88,
     color: 'rgba(224,240,255,0.85)',
     fontStyle: 'italic', fontWeight: 400,
     margin: '0 0 28px',
