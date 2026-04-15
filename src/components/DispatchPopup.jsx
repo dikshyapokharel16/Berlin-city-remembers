@@ -4,11 +4,15 @@ import { RESIDENT_TYPES } from '../data/residents'
 import { stressBadge } from '../theme'
 import AftermathScreen from './AftermathScreen'
 import IgnoredScreen from './IgnoredScreen'
-import { incrementHelperCount, incrementKiezHealth } from '../utils/storage'
+import CityHealthScreen from './CityHealthScreen'
+import {
+  incrementHelperCount, incrementKiezHealth,
+  decrementKiezHealth, incrementPersonalActions, incrementPersonalIgnores,
+} from '../utils/storage'
 import { icons } from './icons'
 
 export default function DispatchPopup({ resident, onClose }) {
-  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath' | 'ignored'
+  const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath' | 'ignored' | 'cityhealth'
   const [helperCount, setHelperCount] = useState(0)
   const [kiezHealth, setKiezHealth] = useState(0)
   const type = RESIDENT_TYPES[resident.type]
@@ -17,7 +21,14 @@ export default function DispatchPopup({ resident, onClose }) {
   const handleDo = () => {
     setHelperCount(incrementHelperCount(resident.type))
     setKiezHealth(incrementKiezHealth(resident.kiez))
+    incrementPersonalActions()
     setPhase('aftermath')
+  }
+
+  const handleIgnore = () => {
+    decrementKiezHealth(resident.kiez)
+    incrementPersonalIgnores()
+    setPhase('ignored')
   }
 
   return (
@@ -97,7 +108,7 @@ export default function DispatchPopup({ resident, onClose }) {
                 style={s.btnSkip}
                 whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => setPhase('ignored')}
+                onClick={handleIgnore}
               >
                 Ignore
               </motion.button>
@@ -123,6 +134,7 @@ export default function DispatchPopup({ resident, onClose }) {
             helperCount={helperCount}
             kiezHealth={kiezHealth}
             onClose={onClose}
+            onViewHealth={() => setPhase('cityhealth')}
           />
         )}
 
@@ -135,6 +147,15 @@ export default function DispatchPopup({ resident, onClose }) {
             Icon={Icon}
             onClose={onClose}
             onReconsider={() => setPhase('dispatch')}
+            onViewHealth={() => setPhase('cityhealth')}
+          />
+        )}
+
+        {/* ── City health screen ── */}
+        {phase === 'cityhealth' && (
+          <CityHealthScreen
+            key="cityhealth"
+            onClose={onClose}
           />
         )}
 

@@ -13,7 +13,7 @@ const POP_DOT_COLOR = (status) => {
   return '#8ab8b2'
 }
 
-export default function AftermathScreen({ resident, type, Icon, helperCount, kiezHealth, onClose }) {
+export default function AftermathScreen({ resident, type, Icon, helperCount, kiezHealth, onClose, onViewHealth }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError, setImgError] = useState(false)
 
@@ -131,15 +131,25 @@ export default function AftermathScreen({ resident, type, Icon, helperCount, kie
 
       </div>
 
-      {/* Back button */}
-      <motion.button
-        style={{ ...s.backBtn, borderColor: type.color, color: type.color }}
-        whileHover={{ backgroundColor: `${type.color}22`, scale: 1.01 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={onClose}
-      >
-        Back to the map
-      </motion.button>
+      {/* Buttons */}
+      <div style={{ display: 'flex', gap: 12 }}>
+        <motion.button
+          style={{ ...s.backBtn, flex: 1, borderColor: type.color, color: type.color }}
+          whileHover={{ backgroundColor: `${type.color}22`, scale: 1.01 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onClose}
+        >
+          Back to the map
+        </motion.button>
+        <motion.button
+          style={{ ...s.backBtn, flex: 1, borderColor: 'rgba(0,245,255,0.3)', color: '#00f5ff' }}
+          whileHover={{ backgroundColor: 'rgba(0,245,255,0.08)', scale: 1.01 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onViewHealth}
+        >
+          See city health
+        </motion.button>
+      </div>
     </motion.div>
   )
 }

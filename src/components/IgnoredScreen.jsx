@@ -22,7 +22,7 @@ function buildNarrative(resident, type) {
     `and recovery is no longer guaranteed.`
 }
 
-export default function IgnoredScreen({ resident, type, Icon, onClose, onReconsider }) {
+export default function IgnoredScreen({ resident, type, Icon, onClose, onReconsider, onViewHealth }) {
   const days   = daysUnresolved(resident.id)
   const trend  = popTrendAfterIgnore(type.populationStatus)
   const tColor = trendColor(trend)
@@ -125,12 +125,20 @@ export default function IgnoredScreen({ resident, type, Icon, onClose, onReconsi
           ↩ Reconsider
         </motion.button>
         <motion.button
+          style={{ ...s.btnReconsider, borderColor: 'rgba(0,245,255,0.3)', color: '#00f5ff' }}
+          whileHover={{ backgroundColor: 'rgba(0,245,255,0.08)', scale: 1.01 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onViewHealth}
+        >
+          See city health
+        </motion.button>
+        <motion.button
           style={s.btnLeave}
           whileHover={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
           whileTap={{ scale: 0.97 }}
           onClick={onClose}
         >
-          Leave anyway
+          Leave
         </motion.button>
       </div>
     </motion.div>
