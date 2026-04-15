@@ -98,7 +98,7 @@ export default function DispatchPopup({ resident, onClose }) {
                 whileTap={{ scale: 0.97 }}
                 onClick={onClose}
               >
-                Skip it
+                Ignore
               </motion.button>
               <motion.button
                 style={{ ...s.btnDo, borderColor: type.color, color: type.color }}
@@ -106,7 +106,7 @@ export default function DispatchPopup({ resident, onClose }) {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleDo}
               >
-                Do it
+                Take Action
               </motion.button>
             </div>
           </motion.div>
