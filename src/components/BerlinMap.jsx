@@ -127,19 +127,19 @@ const buildings3d = {
   id: '3d-buildings', source: 'carto', 'source-layer': 'building',
   type: 'fill-extrusion', minzoom: 13,
   paint: {
-    // Height-based colour: taller buildings shift from deep navy → dark indigo
+    // Height-based colour: cyberpunk deep blue → electric indigo
     'fill-extrusion-color': [
       'interpolate', ['linear'], OSM_H,
-      0,   '#04060f',
-      15,  '#08091a',
-      40,  '#0d0e2a',
-      80,  '#12143a',
-      150, '#181a4a',
+      0,   '#060d20',
+      15,  '#0a1535',
+      40,  '#0f1f55',
+      80,  '#142070',
+      150, '#1a1a8a',
     ],
     'fill-extrusion-height': OSM_H,
     'fill-extrusion-base': OSM_BASE,
     // Fade in as you zoom — avoids a pop at zoom 13
-    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, 0.95],
+    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, 1.0],
     'fill-extrusion-vertical-gradient': true,
   },
 }
@@ -156,7 +156,7 @@ const buildingsTop = {
     ],
     'fill-extrusion-height': OSM_H,
     'fill-extrusion-base': ['max', 0, ['-', OSM_H, 0.9]],
-    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 16, 0.22],
+    'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 16, 0.55],
   },
 }
 
@@ -642,10 +642,12 @@ export default function BerlinMap({ selectedKiez }) {
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
         backgroundImage: `
+          linear-gradient(rgba(0,245,255,0.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,245,255,0.12) 1px, transparent 1px),
           linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
           linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px)
         `,
-        backgroundSize: '64px 64px',
+        backgroundSize: '128px 128px, 128px 128px, 32px 32px, 32px 32px',
       }} />
 
       {/* ── Vignette ──────────────────────────────────────────── */}
