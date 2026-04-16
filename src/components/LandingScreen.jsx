@@ -26,28 +26,56 @@ const TEXT_ROWS = [
     dir: 'left', speed: 55, size: 21, font: "'Playfair Display', serif", italic: true, top: '5vh',
   },
   {
+    text: "Light pollution index 8.2  ·  37% canopy cover lost since 1990  ·  Air quality index: moderate  ·  Urban heat island +3.4°C  ·  Noise level 68dB  ·  ",
+    dir: 'right', speed: 42, size: 11, font: "'Inter', sans-serif", italic: false, top: '11vh',
+  },
+  {
     text: "Urban Fox  ·  Solitary Bee  ·  Migratory Bird  ·  Linden Tree  ·  Wild Boar  ·  Spree River  ·  ",
     dir: 'right', speed: 38, size: 12, font: "'Inter', sans-serif", italic: false, top: '17vh',
+  },
+  {
+    text: "I drank from the Spree before the factories came  ·  My nest was built before the wall fell  ·  I have seen five generations of humans in this park  ·  ",
+    dir: 'left', speed: 67, size: 20, font: "'Playfair Display', serif", italic: true, top: '23vh',
   },
   {
     text: "4,200 particles per litre  ·  The water runs 2°C warmer  ·  I was planted in 1943  ·  I watched it happen  ·  I am suffocating slowly  ·  ",
     dir: 'left', speed: 70, size: 21, font: "'Playfair Display', serif", italic: true, top: '29vh',
   },
   {
+    text: "Bee colony count −62%  ·  Wild boar sightings Grunewald +180%  ·  Fox spotted Hasenheide  ·  Sparrow population declining  ·  Parakeet territories expanding  ·  ",
+    dir: 'right', speed: 35, size: 11, font: "'Inter', sans-serif", italic: false, top: '35vh',
+  },
+  {
     text: "Prenzlauer Berg  ·  Kreuzberg  ·  Tiergarten  ·  Mitte  ·  Neukölln  ·  Grunewald  ·  Wedding  ·  Spandau  ·  Tempelhof  ·  Lichtenberg  ·  ",
     dir: 'right', speed: 30, size: 12, font: "'Inter', sans-serif", italic: false, top: '41vh',
+  },
+  {
+    text: "The foxglove bloomed through the tarmac  ·  I nested where the wall once stood  ·  My territory is now a cycle lane  ·  I remember the meadow  ·  ",
+    dir: 'left', speed: 75, size: 20, font: "'Playfair Display', serif", italic: true, top: '47vh',
   },
   {
     text: "Construction has shrunk it to under two square kilometres  ·  The parakeet is larger than me  ·  My piglets are thin  ·  The light erases the stars  ·  ",
     dir: 'left', speed: 80, size: 21, font: "'Playfair Display', serif", italic: true, top: '53vh',
   },
   {
+    text: "Microplastics detected  ·  pH 7.4 and dropping  ·  Oxygen saturation 61%  ·  Flood risk zone C  ·  Surface temperature +2.1°C  ·  Spree km 0.0  ·  ",
+    dir: 'right', speed: 48, size: 11, font: "'Inter', sans-serif", italic: false, top: '59vh',
+  },
+  {
     text: "Dispatch from Prenzlauer Berg  ·  Dispatch from Mitte  ·  Dispatch from Grunewald  ·  Dispatch from Kreuzberg  ·  Dispatch from Tiergarten  ·  ",
     dir: 'right', speed: 45, size: 12, font: "'Inter', sans-serif", italic: false, top: '65vh',
   },
   {
+    text: "The concrete remembers nothing  ·  I have watched the water level rise three centimetres  ·  My bark carries the history of two world wars  ·  ",
+    dir: 'left', speed: 58, size: 20, font: "'Playfair Display', serif", italic: true, top: '71vh',
+  },
+  {
     text: "I still don't know another way across  ·  I don't know what comes after the branches  ·  My home used to be four square kilometres  ·  ",
     dir: 'left', speed: 62, size: 21, font: "'Playfair Display', serif", italic: true, top: '77vh',
+  },
+  {
+    text: "Species richness index 2.1  ·  Green corridor interrupted  ·  Tiergarten elevation 34m  ·  Impervious surface 68%  ·  Groundwater depth −4.2m  ·  ",
+    dir: 'right', speed: 40, size: 11, font: "'Inter', sans-serif", italic: false, top: '83vh',
   },
   {
     text: "Schönhauser Allee  ·  Unter den Linden  ·  Sonnenallee  ·  Alexanderplatz  ·  Tempelhofer Feld  ·  Spandauer Damm  ·  ",
@@ -58,14 +86,37 @@ const TEXT_ROWS = [
 const CURSOR_SIZE = 120
 
 export default function LandingScreen({ onComplete }) {
+  const DESC = "We are not the only ones living here. This is a translation for those who have no words — the fox, the river, the tree, the bee, the street... Dispatches from the non-human city."
+
   const [ready, setReady] = useState(false)
   const [mouse, setMouse] = useState({ x: -300, y: -300 })
   const [clicking, setClicking] = useState(false)
+  const [time, setTime] = useState(() => new Date())
+  const [descIdx, setDescIdx] = useState(0)
 
   useEffect(() => {
     const t = setTimeout(() => setReady(true), 200)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    const start = setTimeout(() => {
+      const id = setInterval(() => {
+        setDescIdx(i => {
+          if (i >= DESC.length) { clearInterval(id); return i }
+          return i + 1
+        })
+      }, 38)
+      return () => clearInterval(id)
+    }, 1600)
+    return () => clearTimeout(start)
+  }, [ready])
 
   useEffect(() => {
     const onMove = e => setMouse({ x: e.clientX, y: e.clientY })
@@ -84,7 +135,7 @@ export default function LandingScreen({ onComplete }) {
   const staggerDelay = (i) => ({ delay: 0.3 + i * 0.18, duration: 0.7, ease: [0.22, 1, 0.36, 1] })
 
   return (
-    <div style={s.root} onClick={onComplete}>
+    <div style={s.root} onClick={descIdx >= DESC.length ? onComplete : undefined}>
 
       {/* ── CSS keyframes for scrolling text ── */}
       <style>{`
@@ -95,6 +146,10 @@ export default function LandingScreen({ onComplete }) {
         @keyframes scrollRight {
           from { transform: translateX(-50%); }
           to   { transform: translateX(0); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0; }
         }
       `}</style>
 
@@ -163,15 +218,39 @@ export default function LandingScreen({ onComplete }) {
 
       {/* ── Custom cursor: position tracker ── */}
       <motion.div
-        style={{ position: 'fixed', top: 0, left: 0, zIndex: 99999, pointerEvents: 'none' }}
+        style={{ position: 'fixed', top: 0, left: 0, zIndex: 99999, pointerEvents: 'none', width: CURSOR_SIZE, height: CURSOR_SIZE }}
         animate={{ x: mouse.x - CURSOR_SIZE / 2, y: mouse.y - CURSOR_SIZE / 2 }}
         transition={{ type: 'spring', stiffness: 350, damping: 30, mass: 0.4 }}
       >
-        {/* Delayed fade-in */}
+        {/* Small bubble — visible while typing, fades out when typing completes */}
         <motion.div
+          style={{
+            position: 'absolute',
+            left: '50%', top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 14, height: 14,
+            borderRadius: '50%',
+            background: 'rgba(0,245,255,0.9)',
+            boxShadow: '0 0 14px rgba(0,245,255,0.9), 0 0 30px rgba(0,245,255,0.45)',
+            pointerEvents: 'none',
+          }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{
+            opacity: descIdx >= DESC.length ? 0 : 1,
+            scale:   descIdx >= DESC.length ? 0 : 1,
+          }}
+          transition={{
+            opacity: { duration: 0.5, delay: descIdx === 0 ? 0.4 : 0 },
+            scale:   { duration: 0.5, delay: descIdx === 0 ? 0.4 : 0 },
+          }}
+        />
+
+        {/* Full circle — appears only once typing is complete */}
+        <motion.div
+          style={{ position: 'absolute', inset: 0 }}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.2, duration: 0.8 }}
+          animate={{ opacity: descIdx >= DESC.length ? 1 : 0 }}
+          transition={{ duration: 0.8 }}
         >
           {/* Circle with pulse / click shrink */}
           <motion.div
@@ -183,6 +262,7 @@ export default function LandingScreen({ onComplete }) {
               background: 'rgba(4,6,15,0.4)',
               backdropFilter: 'blur(4px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'column', gap: 2,
             }}
             animate={{ scale: clicking ? 0.86 : [1, 1.05, 1] }}
             transition={
@@ -191,6 +271,7 @@ export default function LandingScreen({ onComplete }) {
                 : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }
             }
           >
+            <span style={s.cursorText}>CLICK TO</span>
             <span style={s.cursorText}>ENTER</span>
           </motion.div>
         </motion.div>
@@ -225,24 +306,15 @@ export default function LandingScreen({ onComplete }) {
           ))}
         </motion.div>
 
-        {/* CO RESIDENTS — hero headline */}
-        <motion.h1
-          style={s.hero}
+        {/* CO RESIDENTS + mitbewohner — grouped so sub right-aligns to hero */}
+        <motion.div
+          style={{ display: 'inline-flex', flexDirection: 'column', gap: 6 }}
           initial={{ opacity: 0, y: 30, filter: 'blur(12px)' }}
           animate={ready ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
           transition={staggerDelay(1)}
         >
-          Co residents
-        </motion.h1>
-
-        {/* mitbewohner */}
-        <motion.div
-          style={s.sub}
-          initial={{ opacity: 0, y: 16 }}
-          animate={ready ? { opacity: 1, y: 0 } : {}}
-          transition={staggerDelay(2)}
-        >
-          mitbewohner
+          <h1 style={s.hero}>Co residents</h1>
+          <div style={{ ...s.sub, textAlign: 'right' }}>mitbewohner</div>
         </motion.div>
 
         {/* Divider */}
@@ -253,27 +325,52 @@ export default function LandingScreen({ onComplete }) {
           transition={{ ...staggerDelay(3), duration: 0.9 }}
         />
 
-        {/* Tagline */}
-        <motion.p
-          style={s.tagline}
+        {/* Dispatch heading above the box */}
+        <motion.div
+          style={s.dispatchHeading}
           initial={{ opacity: 0 }}
           animate={ready ? { opacity: 1 } : {}}
           transition={staggerDelay(4)}
         >
-          Dispatches from the non-human city.
-        </motion.p>
+          DISPATCHES FROM THE NON-HUMANS
+        </motion.div>
 
-        {/* Coordinate label */}
+        {/* Description box — typewriter inside rectangle */}
         <motion.div
-          style={s.coord}
+          style={s.descBox}
           initial={{ opacity: 0 }}
           animate={ready ? { opacity: 1 } : {}}
           transition={staggerDelay(5)}
         >
-          BERLIN · 52.520°N · 13.405°E
+          <p style={s.descText}>
+            {DESC.slice(0, descIdx)}
+            <span style={s.typeCursor}>|</span>
+          </p>
         </motion.div>
 
       </div>
+
+      {/* ── Top bar — coord above time ── */}
+      <motion.div
+        style={s.topBar}
+        initial={{ opacity: 0 }}
+        animate={ready ? { opacity: 1 } : {}}
+        transition={staggerDelay(1)}
+      >
+        <span style={s.coord}>BERLIN · 52.520°N · 13.405°E</span>
+        <div style={s.timeRow}>
+          <span style={s.timeDot} />
+          <span style={s.timeDigits}>
+            {String(time.getHours()).padStart(2, '0')}
+            <span style={s.timeSep}>:</span>
+            {String(time.getMinutes()).padStart(2, '0')}
+            <span style={s.timeSep}>:</span>
+            {String(time.getSeconds()).padStart(2, '0')}
+          </span>
+          <span style={s.timeLabel}>LOCAL</span>
+        </div>
+      </motion.div>
+
     </div>
   )
 }
@@ -350,11 +447,84 @@ const s = {
     textTransform: 'uppercase',
     marginTop: 8,
   },
+  topBar: {
+    position: 'absolute', top: 22, left: 0, right: 0,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+    zIndex: 3, pointerEvents: 'none',
+  },
+  timeRow: {
+    display: 'flex', alignItems: 'center', gap: 7,
+  },
+  dispatchHeading: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 'clamp(10px, 1vw, 12px)',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    letterSpacing: '0.22em',
+    color: 'rgba(0,245,255,0.45)',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  descBox: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    maxWidth: 460, textAlign: 'center',
+    border: '1px solid rgba(0,245,255,0.18)',
+    background: 'rgba(0,245,255,0.03)',
+    padding: '24px 32px',
+    backdropFilter: 'blur(2px)',
+  },
+  descText: {
+    fontFamily: "'Playfair Display', serif",
+    fontSize: 'clamp(13px, 1.4vw, 16px)',
+    fontStyle: 'italic',
+    fontWeight: 400,
+    lineHeight: 1.85,
+    letterSpacing: '0.02em',
+    color: 'rgba(224,240,255,0.72)',
+    margin: 0,
+  },
+  typeCursor: {
+    display: 'inline-block',
+    marginLeft: 1,
+    animation: 'blink 0.8s step-end infinite',
+    color: 'rgba(0,245,255,0.6)',
+    fontStyle: 'normal',
+    fontWeight: 300,
+  },
+  timeDot: {
+    display: 'inline-block',
+    width: 5, height: 5,
+    borderRadius: '50%',
+    background: '#00f5ff',
+    boxShadow: '0 0 6px rgba(0,245,255,0.9)',
+    animation: 'blink 1s step-end infinite',
+    flexShrink: 0,
+  },
+  timeDigits: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.12em',
+    color: 'rgba(0,245,255,0.55)',
+  },
+  timeSep: {
+    display: 'inline-block',
+    animation: 'blink 1s step-end infinite',
+    margin: '0 1px',
+  },
+  timeLabel: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 8,
+    fontWeight: 400,
+    letterSpacing: '0.25em',
+    color: 'rgba(0,245,255,0.25)',
+    textTransform: 'uppercase',
+  },
   cursorText: {
     fontFamily: "'Inter', sans-serif",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 900,
-    letterSpacing: '0.28em',
+    letterSpacing: '0.15em',
     textTransform: 'uppercase',
     color: '#00f5ff',
     lineHeight: 1,
