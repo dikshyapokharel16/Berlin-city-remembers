@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RESIDENT_TYPES } from '../data/residents'
 import { icons } from './icons'
 
@@ -86,13 +86,14 @@ const TEXT_ROWS = [
 const CURSOR_SIZE = 120
 
 export default function LandingScreen({ onComplete }) {
-  const DESC = "We are not the only ones living here. This is a translation for those who have no words — the fox, the river, the tree, the bee, the street... Dispatches from the non-human city."
+  const DESC = "We are not the only ones living here. This is a translation for those who have no words — the fox, the river, the tree, the street... Dispatches from the non-human city."
 
   const [ready, setReady] = useState(false)
   const [mouse, setMouse] = useState({ x: -300, y: -300 })
   const [clicking, setClicking] = useState(false)
   const [time, setTime] = useState(() => new Date())
   const [descIdx, setDescIdx] = useState(0)
+  const [clicked, setClicked] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => setReady(true), 200)
@@ -105,22 +106,66 @@ export default function LandingScreen({ onComplete }) {
   }, [])
 
   useEffect(() => {
-    if (!ready) return
-    const start = setTimeout(() => {
-      const id = setInterval(() => {
-        setDescIdx(i => {
-          if (i >= DESC.length) { clearInterval(id); return i }
-          return i + 1
-        })
-      }, 38)
-      return () => clearInterval(id)
-    }, 1600)
-    return () => clearTimeout(start)
-  }, [ready])
+    const synth = window.speechSynthesis
+    let spoken = false
+
+    const speak = () => {
+      if (spoken) return
+      spoken = true
+      synth.cancel()
+      const utter = new SpeechSynthesisUtterance(DESC)
+      utter.rate = 1.1
+      utter.pitch = 1.0
+      utter.volume = 0.85
+
+      const voices = synth.getVoices()
+      const preferred = [
+        'Microsoft Aria Online (Natural) - English (United States)',
+        'Microsoft Jenny Online (Natural) - English (United States)',
+        'Google UK English Female',
+        'Samantha',
+      ]
+      for (const name of preferred) {
+        const v = voices.find(v => v.name === name)
+        if (v) { utter.voice = v; break }
+      }
+
+      // Primary: onboundary reveals each word as it's spoken
+      let boundaryFired = false
+      utter.onboundary = (e) => {
+        if (e.name !== 'word') return
+        boundaryFired = true
+        const nextSpace = DESC.indexOf(' ', e.charIndex)
+        setDescIdx(nextSpace === -1 ? DESC.length : nextSpace)
+      }
+
+      // Fallback: if onboundary never fires (some Chrome/voice combos), use interval
+      let fallbackId = null
+      utter.onstart = () => {
+        setTimeout(() => {
+          if (!boundaryFired) {
+            fallbackId = setInterval(() => {
+              setDescIdx(i => {
+                if (i >= DESC.length) { clearInterval(fallbackId); return i }
+                return i + 1
+              })
+            }, 50)
+          }
+        }, 600)
+      }
+
+      utter.onend = () => { clearInterval(fallbackId); setDescIdx(DESC.length) }
+
+      synth.speak(utter)
+    }
+
+    window.addEventListener('mousedown', speak, { once: true })
+    return () => { window.removeEventListener('mousedown', speak); synth.cancel() }
+  }, [])
 
   useEffect(() => {
     const onMove = e => setMouse({ x: e.clientX, y: e.clientY })
-    const onDown = () => setClicking(true)
+    const onDown = () => { setClicking(true); setClicked(true) }
     const onUp   = () => setClicking(false)
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mousedown', onDown)
@@ -348,6 +393,22 @@ export default function LandingScreen({ onComplete }) {
           </p>
         </motion.div>
 
+        {/* Click hint — unmounts entirely on click */}
+        <AnimatePresence>
+          {!clicked && (
+            <motion.div
+              key="clickHint"
+              style={s.clickHint}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, delay: 1.8 }}
+            >
+              · click anywhere ·
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
 
       {/* ── Top bar — coord above time ── */}
@@ -482,6 +543,15 @@ const s = {
     letterSpacing: '0.02em',
     color: 'rgba(224,240,255,0.72)',
     margin: 0,
+  },
+  clickHint: {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 10,
+    fontWeight: 400,
+    letterSpacing: '0.3em',
+    color: 'rgba(0,245,255,0.35)',
+    textTransform: 'uppercase',
+    animation: 'blink 2s ease-in-out infinite',
   },
   typeCursor: {
     display: 'inline-block',
