@@ -1,12 +1,65 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import LandingScreen from './components/LandingScreen'
 import HomeScreen from './components/HomeScreen'
 
+const AMBIENT_FILES = [
+  '/CoResidents/audio/826582__newlocknew__dsgnerie_a-far-dark-otherworldly-transitions-2-x4_em.mp3',
+  '/CoResidents/audio/212459__unfa__electronic-noise-in-the-city.flac',
+]
+const AMBIENT_VOLUMES = [0.55, 0.35]
+
+function fadeVolume(audio, from, to, durationMs) {
+  const steps = 40
+  const interval = durationMs / steps
+  const delta = (to - from) / steps
+  let current = from
+  let step = 0
+  const id = setInterval(() => {
+    step++
+    current = Math.min(Math.max(current + delta, 0), 1)
+    audio.volume = current
+    if (step >= steps) clearInterval(id)
+  }, interval)
+  return id
+}
+
 export default function App() {
   const [screen, setScreen] = useState('landing')
   const [mouse, setMouse] = useState({ x: -100, y: -100 })
+  const ambientRefs = useRef([])
   const goHome = useCallback(() => setScreen('home'), [])
+
+  useEffect(() => {
+    const audios = AMBIENT_FILES.map(src => {
+      const a = new Audio(src)
+      a.loop = true
+      a.volume = 0
+      return a
+    })
+    ambientRefs.current = audios
+
+    const start = () => {
+      audios.forEach((a, i) => {
+        a.play().catch(() => {})
+        fadeVolume(a, 0, AMBIENT_VOLUMES[i], 2000)
+      })
+      window.removeEventListener('pointerdown', start)
+    }
+    window.addEventListener('pointerdown', start)
+    return () => {
+      window.removeEventListener('pointerdown', start)
+      audios.forEach(a => { a.pause(); a.src = '' })
+    }
+  }, [])
+
+  const duckAmbient = useCallback(() => {
+    ambientRefs.current.forEach(a => fadeVolume(a, a.volume, 0, 400))
+  }, [])
+
+  const restoreAmbient = useCallback(() => {
+    ambientRefs.current.forEach((a, i) => fadeVolume(a, a.volume, AMBIENT_VOLUMES[i], 800))
+  }, [])
 
   useEffect(() => {
     const onMove = e => setMouse({ x: e.clientX, y: e.clientY })
@@ -46,7 +99,7 @@ export default function App() {
 
       {screen === 'landing'
         ? <LandingScreen onComplete={goHome} />
-        : <HomeScreen />
+        : <HomeScreen onVoiceStart={duckAmbient} onVoiceStop={restoreAmbient} />
       }
     </>
   )

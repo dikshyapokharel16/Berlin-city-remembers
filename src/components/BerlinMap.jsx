@@ -213,7 +213,7 @@ function nearestResident(lng, lat) {
 }
 
 // ── Component ──────────────────────────────────────────────────────
-export default function BerlinMap({ selectedKiez }) {
+export default function BerlinMap({ selectedKiez, onVoiceStart, onVoiceStop }) {
   const mapRef = useRef()
   const autoTimerRef = useRef()
 
@@ -1039,7 +1039,12 @@ export default function BerlinMap({ selectedKiez }) {
       {/* ── Dispatch Popup ────────────────────────────────────── */}
       <AnimatePresence>
         {popup && (
-          <DispatchPopup resident={popup} onClose={() => setPopup(null)} />
+          <DispatchPopup
+            resident={popup}
+            onClose={() => setPopup(null)}
+            onVoiceStart={onVoiceStart}
+            onVoiceStop={onVoiceStop}
+          />
         )}
       </AnimatePresence>
     </motion.div>

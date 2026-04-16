@@ -22,7 +22,7 @@ const VOICE_CONFIG = {
   street: { rate: 0.95, pitch: 0.88, volume: 0.85 }, // flat, worn, tired
 }
 
-export default function DispatchPopup({ resident, onClose }) {
+export default function DispatchPopup({ resident, onClose, onVoiceStart, onVoiceStop }) {
   const [phase, setPhase] = useState('dispatch') // 'dispatch' | 'aftermath' | 'ignored' | 'cityhealth'
   const [helperCount, setHelperCount] = useState(0)
   const [kiezHealth, setKiezHealth] = useState(0)
@@ -52,6 +52,7 @@ export default function DispatchPopup({ resident, onClose }) {
     if (speaking) {
       synth.cancel()
       setSpeaking(false)
+      onVoiceStop?.()
       return
     }
 
@@ -60,9 +61,9 @@ export default function DispatchPopup({ resident, onClose }) {
     utter.rate = voice.rate
     utter.pitch = voice.pitch
     utter.volume = voice.volume
-    utter.onstart = () => setSpeaking(true)
-    utter.onend = () => setSpeaking(false)
-    utter.onerror = () => setSpeaking(false)
+    utter.onstart = () => { setSpeaking(true); onVoiceStart?.() }
+    utter.onend = () => { setSpeaking(false); onVoiceStop?.() }
+    utter.onerror = () => { setSpeaking(false); onVoiceStop?.() }
     utterRef.current = utter
     synth.speak(utter)
     setSpeaking(true)
